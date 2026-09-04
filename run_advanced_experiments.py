@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import math
 import random
+import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Tuple
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 MS = 1000.0
@@ -24,6 +25,7 @@ class RequestResult:
     """Result produced for one simulated request."""
 
     request_id: int
+    replication: int
     scenario: str
     start_time_s: float
     end_time_s: float
@@ -97,13 +99,18 @@ class ResourcePool:
 class SimulationEngine:
     """Runs the initial baseline emergency-access simulation."""
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, replication: int):
+        self.replication = replication
         self.config = config
         self.simulation = config["simulation"]
         self.parameters = config["baseline"]
 
-        self.random = random.Random(
+        base_seed = int(
             self.simulation.get("random_seed", 42)
+        )
+
+        self.random = random.Random(
+            base_seed + 10000 * replication
         )
 
         self.duration_s = float(
@@ -127,7 +134,7 @@ class SimulationEngine:
             ),
         }
 
-    def service_time_s(
+    def    service_time_s(
         self,
         mean_ms: float,
         std_ms: float | None = None,
@@ -220,19 +227,20 @@ class SimulationEngine:
         )
 
         return RequestResult(
-            request_id=request_id,
-            scenario="emergency_access",
-            start_time_s=arrival_time,
-            end_time_s=now,
-            latency_ms=(now - arrival_time) * MS,
-            success=not trust_failed,
-            failure_reason=(
-                "trust_resolution_failure"
-                if trust_failed
-                else ""
-            ),
-            trust_lookups=context.trust_lookups,
-        )
+        request_id=request_id,
+        replication=self.replication,
+        scenario="emergency_access",
+        start_time_s=arrival_time,
+        end_time_s=now,
+        latency_ms=(now - arrival_time) * MS,
+        success=not trust_failed,
+        failure_reason=(
+        "trust_resolution_failure"
+        if trust_failed
+        else ""
+    ),
+    trust_lookups=context.trust_lookups,
+)
 
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
@@ -256,7 +264,7 @@ class SimulationEngine:
         return results
 
 def main() -> None:
-    """Load the baseline configuration and run the simulation."""
+    """Run repeated baseline simulations and save the results."""
 
     root = Path(__file__).resolve().parent
     config_path = root / "config_baseline.json"
@@ -265,28 +273,59 @@ def main() -> None:
         config_path.read_text(encoding="utf-8")
     )
 
-    engine = SimulationEngine(config)
-    results = engine.run()
-
-    successful = sum(result.success for result in results)
-    failed = len(results) - successful
-
-    average_latency_ms = (
-        sum(result.latency_ms for result in results) / len(results)
-        if results
-        else 0.0
+    replication_count = int(
+        config["simulation"]["replications"]
     )
 
-    print("Baseline emergency-access simulation")
-    print(f"Requests: {len(results)}")
-    print(f"Successful: {successful}")
-    print(f"Failed: {failed}")
-    print(f"Average latency: {average_latency_ms:.2f} ms")
+    all_results = []
 
-    print("\nResource statistics")
+    for replication in range(replication_count):
+        engine = SimulationEngine(config, replication)
+        replication_results = engine.run()
+        all_results.extend(replication_results)
 
-    for resource_name, resource in engine.resources.items():
-        print(resource_name, resource.stats(engine.duration_s))
+        successful = sum(
+            result.success
+            for result in replication_results
+        )
+
+        print(
+            f"Replication {replication + 1}: "
+            f"{len(replication_results)} requests, "
+            f"{successful} successful"
+        )
+
+    detail = pd.DataFrame(
+        asdict(result)
+        for result in all_results
+    )
+
+    summary = (
+        detail.groupby("replication", as_index=False)
+        .agg(
+            total_requests=("request_id", "count"),
+            success_rate=("success", "mean"),
+            average_latency_ms=("latency_ms", "mean"),
+            median_latency_ms=("latency_ms", "median"),
+        )
+    )
+
+    output_directory = root / "results"
+    output_directory.mkdir(exist_ok=True)
+
+    detail.to_csv(
+        output_directory / "baseline_detail.csv",
+        index=False,
+    )
+
+    summary.to_csv(
+        output_directory / "baseline_by_replication.csv",
+        index=False,
+    )
+
+    print("\nBaseline simulation completed.")
+    print(summary.to_string(index=False))
+    print("\nResults saved in the results directory.")
 
 
 if __name__ == "__main__":
