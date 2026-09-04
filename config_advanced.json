@@ -1,0 +1,46 @@
+{
+    "simulation": {
+        "duration_seconds": 1200,
+        "replications": 10,
+        "random_seed": 42,
+        "warmup_seconds": 120.0,
+        "common_random_numbers": true,
+        "arrival_rate_per_second": {
+            "emergency_access": 0.18
+        }
+    },
+    "baseline": {
+        "trust_cache_enabled": false,
+        "fallback_trust_enabled": false,
+        "circuit_breaker_enabled": false,
+        "max_retry_attempts": 1,
+        "credential_verification_mean_ms": 36,
+        "did_resolution_mean_ms": 18,
+        "trust_lookup_mean_ms": 3500,
+        "trust_lookup_std_ms": 800,
+        "trust_failure_probability": 0.03,
+        "cached_trust_lookup_mean_ms": 450,
+        "cached_trust_lookup_std_ms": 90,
+        "trust_cache_hit_probability": 0.0,
+        "verifier_capacity": 2,
+        "trust_service_capacity": 1,
+        "service_time_distribution": "lognormal"
+    },
+    "refined": {
+        "trust_cache_enabled": true,
+        "fallback_trust_enabled": true,
+        "circuit_breaker_enabled": true,
+        "max_retry_attempts": 3,
+        "credential_verification_mean_ms": 36,
+        "did_resolution_mean_ms": 18,
+        "trust_lookup_mean_ms": 3500,
+        "trust_lookup_std_ms": 800,
+        "trust_failure_probability": 0.01,
+        "cached_trust_lookup_mean_ms": 450,
+        "cached_trust_lookup_std_ms": 90,
+        "trust_cache_hit_probability": 0.9,
+        "verifier_capacity": 3,
+        "trust_service_capacity": 2,
+        "service_time_distribution": "lognormal"
+    }
+}

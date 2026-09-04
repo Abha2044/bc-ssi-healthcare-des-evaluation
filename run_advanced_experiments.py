@@ -267,7 +267,7 @@ def main() -> None:
     """Run repeated baseline simulations and save the results."""
 
     root = Path(__file__).resolve().parent
-    config_path = root / "config_baseline.json"
+    config_path = root / "config_advanced.json"
 
     config = json.loads(
         config_path.read_text(encoding="utf-8")
