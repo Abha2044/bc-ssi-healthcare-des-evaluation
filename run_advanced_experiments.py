@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import math
 import random
+import pandas as pd
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import pandas as pd
+
 
 
 MS = 1000.0
@@ -25,7 +26,7 @@ class RequestContext:
     fallback_used: int = 0
     circuit_opened: int = 0
     status_checks: int = 0
-
+    obligations:  int = 0
 
 @dataclass
 class RequestResult:
@@ -43,10 +44,11 @@ class RequestResult:
     trust_lookups: int
     trust_cache_hit: int
     status_check_used: int
+    obligations_executed: int
     retry_attempts: int
     fallback_used: int
     circuit_opened: int
-
+    
 
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
@@ -155,6 +157,11 @@ class SimulationEngine:
             "trust": ResourcePool(
                 name="trust",
                 capacity=self.parameters["trust_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "policy": ResourcePool(
+                name="policy",
+                capacity=self.parameters["policy_engine_capacity"],
                 warmup_s=self.warmup_s,
             ),
         }
@@ -318,6 +325,37 @@ class SimulationEngine:
 
         return now, failed
 
+    def policy_and_obligation_handling(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> float:
+        """Evaluate policy and execute obligations when supported."""
+
+        now = self.resource_step(
+            now,
+            "policy",
+            self.parameters["policy_evaluation_mean_ms"],
+        )
+
+        if not self.parameters.get(
+            "obligation_handling_enabled",
+            False,
+        ):
+            return now
+
+        context.obligations += 1
+
+        now = self.resource_step(
+            now,
+            "policy",
+            self.parameters["obligation_handling_mean_ms"],
+        )
+
+        return now
+
+
+
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -369,6 +407,12 @@ class SimulationEngine:
 
         request_failed = trust_failed or status_failed
 
+        if not request_failed:
+            now = self.policy_and_obligation_handling(
+                now,
+                context,
+        )
+        
         if trust_failed:
             failure_reason = "trust_resolution_failure"
         elif status_failed:
@@ -389,8 +433,9 @@ class SimulationEngine:
             trust_lookups=context.trust_lookups,
             trust_cache_hit=context.cache_hits,
             status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
             retry_attempts=context.retry_attempts,
-            fallback_used=context.fallback_used,
+            fallback_used=context.fallback_used, 
             circuit_opened=context.circuit_opened,
         )
 
@@ -474,6 +519,10 @@ def main() -> None:
             average_retry_attempts=("retry_attempts", "mean"),
             fallback_rate=("fallback_used", "mean"),
             circuit_open_rate=("circuit_opened", "mean"),
+            obligation_execution_rate=(
+                "obligations_executed",
+                "mean",
+            ),
         )
     )
 
@@ -500,6 +549,10 @@ def main() -> None:
             mean_retry_attempts=("average_retry_attempts", "mean"),
             mean_fallback_rate=("fallback_rate", "mean"),
             mean_circuit_open_rate=("circuit_open_rate", "mean"),
+            mean_obligation_execution_rate=(
+                "obligation_execution_rate",
+                "mean",
+            ),
         )
     )
 
