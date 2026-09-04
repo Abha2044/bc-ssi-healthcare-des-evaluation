@@ -31,6 +31,10 @@
         "credential_status_mean_ms": 95,
         "credential_status_failure_probability": 0.04,
         "status_service_capacity": 1,
+        "obligation_handling_enabled": false,
+        "policy_evaluation_mean_ms": 6,
+        "obligation_handling_mean_ms": 90,
+        "policy_engine_capacity": 2,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -55,6 +59,10 @@
         "credential_status_mean_ms": 75,
         "credential_status_failure_probability": 0.015,
         "status_service_capacity": 2,
+        "obligation_handling_enabled": true,
+        "policy_evaluation_mean_ms": 6,
+        "obligation_handling_mean_ms": 45,
+        "policy_engine_capacity": 3,
         "service_time_distribution": "lognormal"
     }
 }
