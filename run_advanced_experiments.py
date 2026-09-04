@@ -17,6 +17,7 @@ class RequestContext:
     """State accumulated while processing one request."""
 
     trust_lookups: int = 0
+    cache_hits: int = 0
     retry_attempts: int = 0
 
 
@@ -26,6 +27,7 @@ class RequestResult:
 
     request_id: int
     replication: int
+    architecture: str
     scenario: str
     start_time_s: float
     end_time_s: float
@@ -33,6 +35,7 @@ class RequestResult:
     success: bool
     failure_reason: str
     trust_lookups: int
+    trust_cache_hit: int
 
 
 class ResourcePool:
@@ -99,11 +102,17 @@ class ResourcePool:
 class SimulationEngine:
     """Runs the initial baseline emergency-access simulation."""
 
-    def __init__(self, config: Dict, replication: int):
-        self.replication = replication
+    def __init__(
+    self,
+    config: Dict,
+    architecture: str,
+    replication: int,
+):
         self.config = config
+        self.architecture = architecture
+        self.replication = replication
         self.simulation = config["simulation"]
-        self.parameters = config["baseline"]
+        self.parameters = config[architecture]
 
         base_seed = int(
             self.simulation.get("random_seed", 42)
@@ -175,7 +184,53 @@ class SimulationEngine:
         )
 
         return finish
+    
+        def trust_lookup(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> Tuple[float, bool]:
+            
+         """Resolve issuer trust using remote or cached trust data."""
 
+        context.trust_lookups += 1
+
+        cache_enabled = self.parameters.get(
+            "trust_cache_enabled",
+            False,
+        )
+
+        cache_hit_probability = self.parameters.get(
+            "trust_cache_hit_probability",
+            0.0,
+        )
+
+        if (
+            cache_enabled
+            and self.random.random() < cache_hit_probability
+        ):
+            context.cache_hits += 1
+
+            cache_delay = self.service_time_s(
+                self.parameters["cached_trust_lookup_mean_ms"],
+                self.parameters["cached_trust_lookup_std_ms"],
+            )
+
+            return now + cache_delay, False
+
+        now = self.resource_step(
+            now,
+            "trust",
+            self.parameters["trust_lookup_mean_ms"],
+            self.parameters["trust_lookup_std_ms"],
+        )
+
+        failed = (
+            self.random.random()
+            < self.parameters["trust_failure_probability"]
+        )
+
+        return now, failed
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -212,35 +267,28 @@ class SimulationEngine:
             self.parameters["did_resolution_mean_ms"],
         )
 
-        context.trust_lookups += 1
-
-        now = self.resource_step(
+        now, trust_failed = self.trust_lookup(
             now,
-            "trust",
-            self.parameters["trust_lookup_mean_ms"],
-            self.parameters["trust_lookup_std_ms"],
-        )
-
-        trust_failed = (
-            self.random.random()
-            < self.parameters["trust_failure_probability"]
+            context,
         )
 
         return RequestResult(
-        request_id=request_id,
-        replication=self.replication,
-        scenario="emergency_access",
-        start_time_s=arrival_time,
-        end_time_s=now,
-        latency_ms=(now - arrival_time) * MS,
-        success=not trust_failed,
-        failure_reason=(
-        "trust_resolution_failure"
-        if trust_failed
-        else ""
-    ),
-    trust_lookups=context.trust_lookups,
-)
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="emergency_access",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not trust_failed,
+            failure_reason=(
+                "trust_resolution_failure"
+                if trust_failed
+                else ""
+            ),
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+        )
 
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
@@ -264,7 +312,7 @@ class SimulationEngine:
         return results
 
 def main() -> None:
-    """Run repeated baseline simulations and save the results."""
+    """Compare baseline and refined architecture simulations."""
 
     root = Path(__file__).resolve().parent
     config_path = root / "config_advanced.json"
@@ -279,21 +327,27 @@ def main() -> None:
 
     all_results = []
 
-    for replication in range(replication_count):
-        engine = SimulationEngine(config, replication)
-        replication_results = engine.run()
-        all_results.extend(replication_results)
+    for architecture in ["baseline", "refined"]:
+        for replication in range(replication_count):
+            engine = SimulationEngine(
+                config,
+                architecture,
+                replication,
+            )
 
-        successful = sum(
-            result.success
-            for result in replication_results
-        )
+            replication_results = engine.run()
+            all_results.extend(replication_results)
 
-        print(
-            f"Replication {replication + 1}: "
-            f"{len(replication_results)} requests, "
-            f"{successful} successful"
-        )
+            successful = sum(
+                result.success
+                for result in replication_results
+            )
+
+            print(
+                f"{architecture}, replication {replication + 1}: "
+                f"{len(replication_results)} requests, "
+                f"{successful} successful"
+            )
 
     detail = pd.DataFrame(
         asdict(result)
@@ -301,12 +355,16 @@ def main() -> None:
     )
 
     summary = (
-        detail.groupby("replication", as_index=False)
+        detail.groupby(
+            ["architecture", "replication"],
+            as_index=False,
+        )
         .agg(
             total_requests=("request_id", "count"),
             success_rate=("success", "mean"),
             average_latency_ms=("latency_ms", "mean"),
             median_latency_ms=("latency_ms", "median"),
+            cache_hit_rate=("trust_cache_hit", "mean"),
         )
     )
 
@@ -314,17 +372,26 @@ def main() -> None:
     output_directory.mkdir(exist_ok=True)
 
     detail.to_csv(
-        output_directory / "baseline_detail.csv",
+        output_directory / "baseline_refined_detail.csv",
         index=False,
     )
 
     summary.to_csv(
-        output_directory / "baseline_by_replication.csv",
+        output_directory / "baseline_refined_by_replication.csv",
         index=False,
     )
 
-    print("\nBaseline simulation completed.")
-    print(summary.to_string(index=False))
+    overall = (
+        summary.groupby("architecture", as_index=False)
+        .agg(
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+            mean_cache_hit_rate=("cache_hit_rate", "mean"),
+        )
+    )
+
+    print("\nBaseline-versus-refined comparison")
+    print(overall.to_string(index=False))
     print("\nResults saved in the results directory.")
 
 
