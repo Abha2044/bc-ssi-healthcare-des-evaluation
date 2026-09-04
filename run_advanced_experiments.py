@@ -19,12 +19,16 @@ class RequestContext:
     trust_lookups: int = 0
     cache_hits: int = 0
     retry_attempts: int = 0
-
+    fallback_used: int = 0
+    circuit_opened: int = 0
 
 @dataclass
 class RequestResult:
     """Result produced for one simulated request."""
 
+    retry_attempts: int
+    fallback_used: int
+    circuit_opened: int
     request_id: int
     replication: int
     architecture: str
@@ -190,7 +194,7 @@ class SimulationEngine:
         now: float,
         context: RequestContext,
     ) -> Tuple[float, bool]:
-        """Resolve issuer trust using remote or cached trust data."""
+        """Resolve trust using cache, retries and bounded fallback."""
 
         context.trust_lookups += 1
 
@@ -217,19 +221,60 @@ class SimulationEngine:
 
             return now + cache_delay, False
 
-        now = self.resource_step(
-            now,
-            "trust",
-            self.parameters["trust_lookup_mean_ms"],
-            self.parameters["trust_lookup_std_ms"],
+        maximum_attempts = max(
+            1,
+            int(self.parameters.get("max_retry_attempts", 1)),
         )
 
-        failed = (
-            self.random.random()
-            < self.parameters["trust_failure_probability"]
-        )
+        trust_failed = True
 
-        return now, failed
+        for attempt in range(maximum_attempts):
+            now = self.resource_step(
+                now,
+                "trust",
+                self.parameters["trust_lookup_mean_ms"],
+                self.parameters["trust_lookup_std_ms"],
+            )
+
+            trust_failed = (
+                self.random.random()
+                < self.parameters["trust_failure_probability"]
+            )
+
+            if not trust_failed:
+                return now, False
+
+            if attempt < maximum_attempts - 1:
+                context.retry_attempts += 1
+
+                backoff_ms = (
+                    self.parameters["retry_backoff_base_ms"]
+                    * (2**attempt)
+                )
+
+                now += backoff_ms / MS
+
+        if self.parameters.get("fallback_trust_enabled", False):
+            context.fallback_used = 1
+
+            fallback_delay = self.service_time_s(
+                self.parameters["cached_trust_lookup_mean_ms"] * 1.5,
+                self.parameters["cached_trust_lookup_std_ms"],
+            )
+
+            now += fallback_delay
+
+            if self.parameters.get(
+                "circuit_breaker_enabled",
+                False,
+            ):
+                context.circuit_opened = 1
+
+            return now, False
+
+        now += self.parameters.get("trust_timeout_ms", 5000) / MS
+
+        return now, True
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -275,6 +320,9 @@ class SimulationEngine:
             request_id=request_id,
             replication=self.replication,
             architecture=self.architecture,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
             scenario="emergency_access",
             start_time_s=arrival_time,
             end_time_s=now,
@@ -287,7 +335,11 @@ class SimulationEngine:
             ),
             trust_lookups=context.trust_lookups,
             trust_cache_hit=context.cache_hits,
+           
+            
+            
         )
+      
 
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
@@ -364,6 +416,9 @@ def main() -> None:
             average_latency_ms=("latency_ms", "mean"),
             median_latency_ms=("latency_ms", "median"),
             cache_hit_rate=("trust_cache_hit", "mean"),
+            average_retry_attempts=("retry_attempts", "mean"),
+            fallback_rate=("fallback_used", "mean"),
+            circuit_open_rate=("circuit_opened", "mean"),
         )
     )
 
@@ -386,6 +441,9 @@ def main() -> None:
             mean_success_rate=("success_rate", "mean"),
             mean_latency_ms=("average_latency_ms", "mean"),
             mean_cache_hit_rate=("cache_hit_rate", "mean"),
+            mean_retry_attempts=("average_retry_attempts", "mean"),
+            mean_fallback_rate=("fallback_rate", "mean"),
+            mean_circuit_open_rate=("circuit_open_rate", "mean"),
         )
     )
 
