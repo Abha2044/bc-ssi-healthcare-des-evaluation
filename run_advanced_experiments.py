@@ -1,9 +1,12 @@
 """Discrete-event evaluation of the BC-SSI healthcare architecture."""
-
 from __future__ import annotations
-
+import json
+import math
+import random
+from pathlib import Path
+from typing import Dict, List, Tuple
 from dataclasses import dataclass
-from typing import Dict, Tuple
+
 
 MS = 1000.0
 
@@ -91,29 +94,200 @@ class ResourcePool:
             "maximum_wait_ms": self.max_wait * MS,
         }
 
+class SimulationEngine:
+    """Runs the initial baseline emergency-access simulation."""
 
-def check_resource_pool() -> None:
-    """Run a small queue test before adding the complete simulation."""
+    def __init__(self, config: Dict):
+        self.config = config
+        self.simulation = config["simulation"]
+        self.parameters = config["baseline"]
 
-    pool = ResourcePool(name="trust", capacity=1)
+        self.random = random.Random(
+            self.simulation.get("random_seed", 42)
+        )
 
-    first_finish, first_wait = pool.process(
-        now=0.0,
-        service_time_s=1.0,
+        self.duration_s = float(
+            self.simulation["duration_seconds"]
+        )
+
+        self.warmup_s = float(
+            self.simulation.get("warmup_seconds", 0.0)
+        )
+
+        self.resources = {
+            "verifier": ResourcePool(
+                name="verifier",
+                capacity=self.parameters["verifier_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "trust": ResourcePool(
+                name="trust",
+                capacity=self.parameters["trust_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+        }
+
+    def service_time_s(
+        self,
+        mean_ms: float,
+        std_ms: float | None = None,
+    ) -> float:
+        """Generate a positive lognormal service time."""
+
+        if std_ms is None:
+            std_ms = max(mean_ms * 0.15, 1.0)
+
+        mean_ms = max(mean_ms, 1e-6)
+        variance = std_ms**2
+
+        sigma_squared = math.log(
+            1.0 + variance / mean_ms**2
+        )
+
+        mu = math.log(mean_ms) - 0.5 * sigma_squared
+        sigma = math.sqrt(sigma_squared)
+
+        sampled_ms = self.random.lognormvariate(mu, sigma)
+
+        return max(1.0, sampled_ms) / MS
+
+    def resource_step(
+        self,
+        now: float,
+        resource_name: str,
+        mean_ms: float,
+        std_ms: float | None = None,
+    ) -> float:
+        """Process one architectural service step."""
+
+        service_time = self.service_time_s(mean_ms, std_ms)
+
+        finish, _ = self.resources[resource_name].process(
+            now,
+            service_time,
+        )
+
+        return finish
+
+    def generate_arrivals(self, rate: float) -> List[float]:
+        """Generate request arrivals using a Poisson process."""
+
+        arrivals = []
+        current_time = 0.0
+
+        while current_time < self.duration_s:
+            current_time += self.random.expovariate(rate)
+
+            if current_time < self.duration_s:
+                arrivals.append(current_time)
+
+        return arrivals
+
+    def run_emergency_request(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process one emergency-access request."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["credential_verification_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["did_resolution_mean_ms"],
+        )
+
+        context.trust_lookups += 1
+
+        now = self.resource_step(
+            now,
+            "trust",
+            self.parameters["trust_lookup_mean_ms"],
+            self.parameters["trust_lookup_std_ms"],
+        )
+
+        trust_failed = (
+            self.random.random()
+            < self.parameters["trust_failure_probability"]
+        )
+
+        return RequestResult(
+            request_id=request_id,
+            scenario="emergency_access",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not trust_failed,
+            failure_reason=(
+                "trust_resolution_failure"
+                if trust_failed
+                else ""
+            ),
+            trust_lookups=context.trust_lookups,
+        )
+
+    def run(self) -> List[RequestResult]:
+        """Run the baseline emergency-access scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["emergency_access"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.run_emergency_request(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
+
+def main() -> None:
+    """Load the baseline configuration and run the simulation."""
+
+    root = Path(__file__).resolve().parent
+    config_path = root / "config_baseline.json"
+
+    config = json.loads(
+        config_path.read_text(encoding="utf-8")
     )
 
-    second_finish, second_wait = pool.process(
-        now=0.5,
-        service_time_s=1.0,
+    engine = SimulationEngine(config)
+    results = engine.run()
+
+    successful = sum(result.success for result in results)
+    failed = len(results) - successful
+
+    average_latency_ms = (
+        sum(result.latency_ms for result in results) / len(results)
+        if results
+        else 0.0
     )
 
-    assert first_finish == 1.0
-    assert first_wait == 0.0
-    assert second_finish == 2.0
-    assert second_wait == 0.5
+    print("Baseline emergency-access simulation")
+    print(f"Requests: {len(results)}")
+    print(f"Successful: {successful}")
+    print(f"Failed: {failed}")
+    print(f"Average latency: {average_latency_ms:.2f} ms")
 
-    print("ResourcePool check passed.")
+    print("\nResource statistics")
+
+    for resource_name, resource in engine.resources.items():
+        print(resource_name, resource.stats(engine.duration_s))
 
 
 if __name__ == "__main__":
-    check_resource_pool()
+    main()
