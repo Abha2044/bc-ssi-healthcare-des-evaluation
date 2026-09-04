@@ -185,13 +185,12 @@ class SimulationEngine:
 
         return finish
     
-        def trust_lookup(
+    def trust_lookup(
         self,
         now: float,
         context: RequestContext,
     ) -> Tuple[float, bool]:
-            
-         """Resolve issuer trust using remote or cached trust data."""
+        """Resolve issuer trust using remote or cached trust data."""
 
         context.trust_lookups += 1
 
