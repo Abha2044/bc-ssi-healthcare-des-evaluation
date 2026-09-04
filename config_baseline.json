@@ -1,0 +1,21 @@
+{
+    "simulation": {
+        "duration_seconds": 1200,
+        "replications": 10,
+        "random_seed": 42,
+        "warmup_seconds": 120.0,
+        "arrival_rate_per_second": {
+            "emergency_access": 0.18
+        }
+    },
+    "baseline": {
+        "credential_verification_mean_ms": 36,
+        "did_resolution_mean_ms": 18,
+        "trust_lookup_mean_ms": 3500,
+        "trust_lookup_std_ms": 800,
+        "trust_failure_probability": 0.03,
+        "verifier_capacity": 2,
+        "trust_service_capacity": 1,
+        "service_time_distribution": "lognormal"
+    }
+}
