@@ -24,6 +24,9 @@
         "trust_cache_hit_probability": 0.0,
         "verifier_capacity": 2,
         "trust_service_capacity": 1,
+        "trust_timeout_ms": 5000,
+        "retry_backoff_base_ms": 100,
+        "fallback_policy": "none",
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -41,6 +44,9 @@
         "trust_cache_hit_probability": 0.9,
         "verifier_capacity": 3,
         "trust_service_capacity": 2,
+        "trust_timeout_ms": 5000,
+        "retry_backoff_base_ms": 100,
+        "fallback_policy": "time_bounded_cached_trust",
         "service_time_distribution": "lognormal"
     }
 }
