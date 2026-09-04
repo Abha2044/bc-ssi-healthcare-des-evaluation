@@ -1,12 +1,15 @@
 """Discrete-event evaluation of the BC-SSI healthcare architecture."""
+
 from __future__ import annotations
+
 import json
 import math
 import random
-import pandas as pd
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
-from dataclasses import asdict, dataclass
+
+import pandas as pd
 
 
 MS = 1000.0
@@ -21,14 +24,13 @@ class RequestContext:
     retry_attempts: int = 0
     fallback_used: int = 0
     circuit_opened: int = 0
+    status_checks: int = 0
+
 
 @dataclass
 class RequestResult:
     """Result produced for one simulated request."""
 
-    retry_attempts: int
-    fallback_used: int
-    circuit_opened: int
     request_id: int
     replication: int
     architecture: str
@@ -40,6 +42,10 @@ class RequestResult:
     failure_reason: str
     trust_lookups: int
     trust_cache_hit: int
+    status_check_used: int
+    retry_attempts: int
+    fallback_used: int
+    circuit_opened: int
 
 
 class ResourcePool:
@@ -103,15 +109,16 @@ class ResourcePool:
             "maximum_wait_ms": self.max_wait * MS,
         }
 
+
 class SimulationEngine:
     """Runs the initial baseline emergency-access simulation."""
 
     def __init__(
-    self,
-    config: Dict,
-    architecture: str,
-    replication: int,
-):
+        self,
+        config: Dict,
+        architecture: str,
+        replication: int,
+    ):
         self.config = config
         self.architecture = architecture
         self.replication = replication
@@ -140,6 +147,11 @@ class SimulationEngine:
                 capacity=self.parameters["verifier_capacity"],
                 warmup_s=self.warmup_s,
             ),
+            "status": ResourcePool(
+                name="status",
+                capacity=self.parameters["status_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
             "trust": ResourcePool(
                 name="trust",
                 capacity=self.parameters["trust_service_capacity"],
@@ -147,7 +159,7 @@ class SimulationEngine:
             ),
         }
 
-    def    service_time_s(
+    def service_time_s(
         self,
         mean_ms: float,
         std_ms: float | None = None,
@@ -188,7 +200,7 @@ class SimulationEngine:
         )
 
         return finish
-    
+
     def trust_lookup(
         self,
         now: float,
@@ -275,6 +287,37 @@ class SimulationEngine:
         now += self.parameters.get("trust_timeout_ms", 5000) / MS
 
         return now, True
+
+    def credential_status_check(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> Tuple[float, bool]:
+        """Check whether the verified credential remains valid."""
+
+        if not self.parameters.get(
+            "explicit_status_check_enabled",
+            False,
+        ):
+            return now, False
+
+        context.status_checks += 1
+
+        now = self.resource_step(
+            now,
+            "status",
+            self.parameters["credential_status_mean_ms"],
+        )
+
+        failed = (
+            self.random.random()
+            < self.parameters[
+                "credential_status_failure_probability"
+            ]
+        )
+
+        return now, failed
+
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -316,30 +359,40 @@ class SimulationEngine:
             context,
         )
 
+        status_failed = False
+
+        if not trust_failed:
+            now, status_failed = self.credential_status_check(
+                now,
+                context,
+            )
+
+        request_failed = trust_failed or status_failed
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        else:
+            failure_reason = ""
+
         return RequestResult(
             request_id=request_id,
             replication=self.replication,
             architecture=self.architecture,
-            retry_attempts=context.retry_attempts,
-            fallback_used=context.fallback_used,
-            circuit_opened=context.circuit_opened,
             scenario="emergency_access",
             start_time_s=arrival_time,
             end_time_s=now,
             latency_ms=(now - arrival_time) * MS,
-            success=not trust_failed,
-            failure_reason=(
-                "trust_resolution_failure"
-                if trust_failed
-                else ""
-            ),
+            success=not request_failed,
+            failure_reason=failure_reason,
             trust_lookups=context.trust_lookups,
             trust_cache_hit=context.cache_hits,
-           
-            
-            
+            status_check_used=context.status_checks,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
         )
-      
 
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
@@ -361,6 +414,7 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
 
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
@@ -416,6 +470,7 @@ def main() -> None:
             average_latency_ms=("latency_ms", "mean"),
             median_latency_ms=("latency_ms", "median"),
             cache_hit_rate=("trust_cache_hit", "mean"),
+            status_check_rate=("status_check_used", "mean"),
             average_retry_attempts=("retry_attempts", "mean"),
             fallback_rate=("fallback_used", "mean"),
             circuit_open_rate=("circuit_opened", "mean"),
@@ -441,6 +496,7 @@ def main() -> None:
             mean_success_rate=("success_rate", "mean"),
             mean_latency_ms=("average_latency_ms", "mean"),
             mean_cache_hit_rate=("cache_hit_rate", "mean"),
+            mean_status_check_rate=("status_check_rate", "mean"),
             mean_retry_attempts=("average_retry_attempts", "mean"),
             mean_fallback_rate=("fallback_rate", "mean"),
             mean_circuit_open_rate=("circuit_open_rate", "mean"),
