@@ -12,7 +12,8 @@
         "high_volume_ingestion": 0.6,
         "consent_revocation": 0.12,
         "consent_based_access": 0.2,
-        "trust_failure": 0.1
+        "trust_failure": 0.1,
+        "lab_ingestion_recovery": 0.1
         }
     },
     "baseline": {
