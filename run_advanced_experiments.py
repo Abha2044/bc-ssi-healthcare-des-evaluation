@@ -29,6 +29,8 @@ class RequestContext:
     obligations:  int = 0
     minimisation:int = 0
     compliance:int = 0
+    audit_logs: int = 0
+    audit_tags: int = 0
 
 @dataclass
 class RequestResult:
@@ -52,6 +54,8 @@ class RequestResult:
     circuit_opened: int
     minimisation_applied: int
     compliance_recorded: int
+    audit_logged: int
+    audit_tagged: int
 
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
@@ -170,6 +174,11 @@ class SimulationEngine:
             "compliance": ResourcePool(
                 name="compliance",
                 capacity=self.parameters["compliance_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "audit": ResourcePool(
+                name="audit",
+                capacity=self.parameters["audit_service_capacity"],
                 warmup_s=self.warmup_s,
             ),
         }
@@ -413,6 +422,28 @@ class SimulationEngine:
 
         return now
 
+    def audit_logging(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> float:
+        """Write an audit event and apply structured tagging when supported."""
+
+        now = self.resource_step(
+            now,
+            "audit",
+            self.parameters["audit_logging_mean_ms"],
+        )
+
+        context.audit_logs += 1
+
+        if self.parameters.get(
+            "audit_tagging_enabled",
+            False,
+        ):
+            context.audit_tags += 1
+
+        return now
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -478,6 +509,10 @@ class SimulationEngine:
                 now,
                 context,
             )
+            now = self.audit_logging(
+                now,
+                context,
+            )
         
         if trust_failed:
             failure_reason = "trust_resolution_failure"
@@ -505,6 +540,8 @@ class SimulationEngine:
             retry_attempts=context.retry_attempts,
             fallback_used=context.fallback_used, 
             circuit_opened=context.circuit_opened,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
             
         )
 
@@ -594,6 +631,8 @@ def main() -> None:
             ),
             minimisation_rate=("minimisation_applied", "mean"),
             compliance_recording_rate=("compliance_recorded", "mean"),
+            audit_logging_rate=("audit_logged", "mean"),
+            audit_tagging_rate=("audit_tagged", "mean"),
         )
     )
 
@@ -630,6 +669,14 @@ def main() -> None:
             ),
             mean_compliance_recording_rate=(
                 "compliance_recording_rate",
+                "mean",
+            ),
+                        mean_audit_logging_rate=(
+                "audit_logging_rate",
+                "mean",
+            ),
+            mean_audit_tagging_rate=(
+                "audit_tagging_rate",
                 "mean",
             ),
         )
