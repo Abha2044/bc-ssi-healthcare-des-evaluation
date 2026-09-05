@@ -191,6 +191,16 @@ class SimulationEngine:
                 capacity=self.parameters["fhir_service_capacity"],
                 warmup_s=self.warmup_s,
             ),
+                        "queue": ResourcePool(
+                name="queue",
+                capacity=self.parameters["queue_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "orchestrator": ResourcePool(
+                name="orchestrator",
+                capacity=self.parameters["orchestrator_capacity"],
+                warmup_s=self.warmup_s,
+            ),
         }
 
     def service_time_s(
@@ -735,7 +745,89 @@ class SimulationEngine:
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
         )
+    def process_high_volume_ingestion(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process one high-volume clinical-data ingestion request."""
 
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "queue",
+            self.parameters["queue_processing_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "orchestrator",
+            self.parameters["orchestration_mean_ms"],
+        )
+
+        now, connector_failed = self.connector_processing(now)
+        trust_failed = False
+
+        if not connector_failed:
+            now = self.fhir_processing(now)
+
+            requires_trust_check = (
+                self.random.random()
+                < self.parameters[
+                    "ingestion_trust_check_probability"
+                ]
+            )
+
+            if requires_trust_check:
+                now, trust_failed = self.trust_lookup(
+                    now,
+                    context,
+                )
+
+        request_failed = connector_failed or trust_failed
+
+        if not request_failed:
+            now = self.compliance_recording(
+                now,
+                context,
+            )
+
+            now = self.audit_logging(
+                now,
+                context,
+            )
+
+        if connector_failed:
+            failure_reason = "connector_failure"
+        elif trust_failed:
+            failure_reason = "trust_resolution_failure"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="high_volume_ingestion",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=0,
+            obligations_executed=0,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=0,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+        )
     def run_audit_investigation(
         self,
     ) -> List[RequestResult]:
@@ -780,6 +872,28 @@ class SimulationEngine:
 
         return results
 
+    def run_high_volume_ingestion(
+        self,
+    ) -> List[RequestResult]:
+        """Run the high-volume ingestion scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["high_volume_ingestion"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.process_high_volume_ingestion(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -823,6 +937,7 @@ def main() -> None:
             "emergency_access",
             "audit_investigation",
             "cross_org_exchange",
+            "high_volume_ingestion",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -837,9 +952,13 @@ def main() -> None:
                     replication_results = (
                         engine.run_audit_investigation()
                     )
-                else:
+                elif scenario == "cross_org_exchange":
                     replication_results = (
                         engine.run_cross_org_exchange()
+                    )
+                else:
+                    replication_results = (
+                        engine.run_high_volume_ingestion()
                     )
 
                 all_results.extend(replication_results)
