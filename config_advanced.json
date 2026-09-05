@@ -6,10 +6,11 @@
         "warmup_seconds": 120.0,
         "common_random_numbers": true,
         "arrival_rate_per_second": {
-        "emergency_access": 0.18,
-        "audit_investigation": 0.005,
-        "cross_org_exchange": 0.15,
-        "high_volume_ingestion": 0.6
+            "emergency_access": 0.18,
+            "audit_investigation": 0.005,
+            "cross_org_exchange": 0.15,
+            "high_volume_ingestion": 0.6,
+            "consent_revocation": 0.12
         }
     },
     "baseline": {
@@ -65,6 +66,13 @@
         "queue_capacity": 2,
         "orchestrator_capacity": 1,
         "ingestion_trust_check_probability": 0.3,
+        "session_manager_enabled": false,
+        "revocation_check_mean_ms": 70,
+        "session_sync_mean_ms": 120,
+        "revocation_delay_failure_probability": 0.08,
+        "session_service_capacity": 1,
+        "session_revalidation_interval_seconds": 300,
+        "unbounded_next_request_mean_seconds": 600,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -120,6 +128,13 @@
         "queue_capacity": 5,
         "orchestrator_capacity": 3,
         "ingestion_trust_check_probability": 0.3,
+        "session_manager_enabled": true,
+        "revocation_check_mean_ms": 45,
+        "session_sync_mean_ms": 35,
+        "revocation_delay_failure_probability": 0.02,
+        "session_service_capacity": 3,
+        "session_revalidation_interval_seconds": 30,
+        "unbounded_next_request_mean_seconds": 600,
         "service_time_distribution": "lognormal"
     }
 }
