@@ -768,7 +768,7 @@ def main() -> None:
         )
     )
 
-    print("\nBaseline-versus-refined comparison")
+    
     print(overall.to_string(index=False))
     print("\nResults saved in the results directory.")
     print("\nScenario comparison")
