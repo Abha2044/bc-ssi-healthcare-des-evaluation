@@ -6,7 +6,8 @@
         "warmup_seconds": 120.0,
         "common_random_numbers": true,
         "arrival_rate_per_second": {
-            "emergency_access": 0.18
+            "emergency_access": 0.18,
+            "audit_investigation": 0.005
         }
     },
     "baseline": {
@@ -41,6 +42,11 @@
         "data_minimization_mean_ms": 45,
         "compliance_recording_mean_ms": 3.6,
         "compliance_service_capacity": 1,
+        "audit_tagging_enabled": false,
+        "audit_logging_mean_ms": 1.2,
+        "audit_reconstruction_mean_ms": 30000,
+        "audit_reconstruction_failure_probability": 0.1,
+        "audit_service_capacity": 2,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -75,6 +81,11 @@
         "data_minimization_mean_ms": 35,
         "compliance_recording_mean_ms": 3.6,
         "compliance_service_capacity": 2,
+        "audit_tagging_enabled": true,
+        "audit_logging_mean_ms": 1.2,
+        "audit_reconstruction_mean_ms": 800,
+        "audit_reconstruction_failure_probability": 0.02,
+        "audit_service_capacity": 3,
         "service_time_distribution": "lognormal"
     }
 }
