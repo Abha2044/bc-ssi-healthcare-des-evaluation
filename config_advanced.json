@@ -35,6 +35,12 @@
         "policy_evaluation_mean_ms": 6,
         "obligation_handling_mean_ms": 90,
         "policy_engine_capacity": 2,
+        "data_minimization_enabled": false,
+        "compliance_required": false,
+        "compliance_optional_deployment_probability": 0.5,
+        "data_minimization_mean_ms": 45,
+        "compliance_recording_mean_ms": 3.6,
+        "compliance_service_capacity": 1,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -63,6 +69,12 @@
         "policy_evaluation_mean_ms": 6,
         "obligation_handling_mean_ms": 45,
         "policy_engine_capacity": 3,
+        "data_minimization_enabled": true,
+        "compliance_required": true,
+        "compliance_optional_deployment_probability": 0.5,
+        "data_minimization_mean_ms": 35,
+        "compliance_recording_mean_ms": 3.6,
+        "compliance_service_capacity": 2,
         "service_time_distribution": "lognormal"
     }
 }
