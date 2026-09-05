@@ -27,6 +27,8 @@ class RequestContext:
     circuit_opened: int = 0
     status_checks: int = 0
     obligations:  int = 0
+    minimisation:int = 0
+    compliance:int = 0
 
 @dataclass
 class RequestResult:
@@ -48,7 +50,8 @@ class RequestResult:
     retry_attempts: int
     fallback_used: int
     circuit_opened: int
-    
+    minimisation_applied: int
+    compliance_recorded: int
 
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
@@ -162,6 +165,11 @@ class SimulationEngine:
             "policy": ResourcePool(
                 name="policy",
                 capacity=self.parameters["policy_engine_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "compliance": ResourcePool(
+                name="compliance",
+                capacity=self.parameters["compliance_service_capacity"],
                 warmup_s=self.warmup_s,
             ),
         }
@@ -353,8 +361,57 @@ class SimulationEngine:
         )
 
         return now
+    def data_minimisation(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> float:
+        """Apply data minimization when the architecture supports it."""
 
+        if not self.parameters.get(
+            "data_minimization_enabled",
+            False,
+        ):
+            return now
 
+        context.minimisation += 1
+
+        processing_time = self.service_time_s(
+            self.parameters["data_minimization_mean_ms"]
+        )
+
+        return now + processing_time
+
+    def compliance_recording(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> float:
+        """Record the compliance event when the component is available."""
+
+        required = self.parameters.get(
+            "compliance_required",
+            False,
+        )
+
+        if not required:
+            deployment_probability = self.parameters.get(
+                "compliance_optional_deployment_probability",
+                0.5,
+            )
+
+            if self.random.random() >= deployment_probability:
+                return now
+
+        context.compliance += 1
+
+        now = self.resource_step(
+            now,
+            "compliance",
+            self.parameters["compliance_recording_mean_ms"],
+        )
+
+        return now
 
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
@@ -411,7 +468,16 @@ class SimulationEngine:
             now = self.policy_and_obligation_handling(
                 now,
                 context,
-        )
+             )
+            now = self.data_minimisation(
+                now,
+                context,
+            )
+
+            now = self.compliance_recording(
+                now,
+                context,
+            )
         
         if trust_failed:
             failure_reason = "trust_resolution_failure"
@@ -434,9 +500,12 @@ class SimulationEngine:
             trust_cache_hit=context.cache_hits,
             status_check_used=context.status_checks,
             obligations_executed=context.obligations,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
             retry_attempts=context.retry_attempts,
             fallback_used=context.fallback_used, 
             circuit_opened=context.circuit_opened,
+            
         )
 
     def run(self) -> List[RequestResult]:
@@ -523,6 +592,8 @@ def main() -> None:
                 "obligations_executed",
                 "mean",
             ),
+            minimisation_rate=("minimisation_applied", "mean"),
+            compliance_recording_rate=("compliance_recorded", "mean"),
         )
     )
 
@@ -551,6 +622,14 @@ def main() -> None:
             mean_circuit_open_rate=("circuit_open_rate", "mean"),
             mean_obligation_execution_rate=(
                 "obligation_execution_rate",
+                "mean",
+            ),
+            mean_minimisation_rate=(
+                "minimisation_rate",
+                "mean",
+            ),
+            mean_compliance_recording_rate=(
+                "compliance_recording_rate",
                 "mean",
             ),
         )
