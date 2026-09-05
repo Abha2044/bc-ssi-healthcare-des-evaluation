@@ -31,6 +31,8 @@ class RequestContext:
     compliance:int = 0
     audit_logs: int = 0
     audit_tags: int = 0
+    revocation_propagation_ms: float = 0.0
+    unauthorized_continuation_ms: float = 0.0
 
 @dataclass
 class RequestResult:
@@ -56,7 +58,8 @@ class RequestResult:
     compliance_recorded: int
     audit_logged: int
     audit_tagged: int
-
+    revocation_propagation_ms: float = 0.0
+    unauthorized_continuation_ms: float = 0.0
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
 
@@ -199,6 +202,11 @@ class SimulationEngine:
             "orchestrator": ResourcePool(
                 name="orchestrator",
                 capacity=self.parameters["orchestrator_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "session": ResourcePool(
+                name="session",
+                capacity=self.parameters["session_service_capacity"],
                 warmup_s=self.warmup_s,
             ),
         }
@@ -362,6 +370,79 @@ class SimulationEngine:
 
         return now, failed
 
+    def revocation_handling(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> Tuple[float, bool]:
+        """Propagate consent revocation to an active session."""
+
+        now = self.resource_step(
+            now,
+            "status",
+            self.parameters["revocation_check_mean_ms"],
+        )
+
+        if self.parameters.get(
+            "session_manager_enabled",
+            False,
+        ):
+            session_start = now
+
+            now = self.resource_step(
+                now,
+                "session",
+                self.parameters["session_sync_mean_ms"],
+            )
+
+            context.revocation_propagation_ms = (
+                now - session_start
+            ) * MS
+
+            interval_seconds = float(
+                self.parameters[
+                    "session_revalidation_interval_seconds"
+                ]
+            )
+
+            context.unauthorized_continuation_ms = (
+                interval_seconds / 2.0 * MS
+                + context.revocation_propagation_ms
+            )
+        else:
+            processing_time = self.service_time_s(
+                self.parameters["session_sync_mean_ms"]
+            )
+
+            now += processing_time
+
+            context.revocation_propagation_ms = (
+                processing_time * MS
+            )
+
+            mean_wait_seconds = float(
+                self.parameters[
+                    "unbounded_next_request_mean_seconds"
+                ]
+            )
+
+            next_request_wait = self.random.expovariate(
+                1.0 / mean_wait_seconds
+            )
+
+            context.unauthorized_continuation_ms = (
+                next_request_wait * MS
+                + context.revocation_propagation_ms
+            )
+
+        propagation_failed = (
+            self.random.random()
+            < self.parameters[
+                "revocation_delay_failure_probability"
+            ]
+        )
+
+        return now, propagation_failed
     def policy_and_obligation_handling(
         self,
         now: float,
@@ -827,6 +908,99 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            revocation_propagation_ms=(context.revocation_propagation_ms),
+            unauthorized_continuation_ms=(context.unauthorized_continuation_ms),
+        )
+        
+    def process_consent_revocation(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process consent revocation for an active access session."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["credential_verification_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["did_resolution_mean_ms"],
+        )
+
+        now, trust_failed = self.trust_lookup(now, context)
+        status_failed = False
+        revocation_failed = False
+
+        if not trust_failed:
+            now, status_failed = self.credential_status_check(
+                now,
+                context,
+            )
+
+        if not trust_failed and not status_failed:
+            now = self.policy_and_obligation_handling(
+                now,
+                context,
+            )
+
+            now, revocation_failed = self.revocation_handling(
+                now,
+                context,
+            )
+
+        request_failed = (
+            trust_failed
+            or status_failed
+            or revocation_failed
+        )
+
+        if not request_failed:
+            now = self.compliance_recording(now, context)
+            now = self.audit_logging(now, context)
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        elif revocation_failed:
+            failure_reason = "revocation_propagation_delay"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="consent_revocation",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=0,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+            revocation_propagation_ms=(
+                context.revocation_propagation_ms
+            ),
+            unauthorized_continuation_ms=(
+                context.unauthorized_continuation_ms
+            ),
         )
     def run_audit_investigation(
         self,
@@ -894,6 +1068,29 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
+    def run_consent_revocation(
+        self,
+    ) -> List[RequestResult]:
+        """Run the consent-revocation scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["consent_revocation"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.process_consent_revocation(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -938,6 +1135,7 @@ def main() -> None:
             "audit_investigation",
             "cross_org_exchange",
             "high_volume_ingestion",
+            "consent_revocation",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -948,19 +1146,31 @@ def main() -> None:
 
                 if scenario == "emergency_access":
                     replication_results = engine.run()
+
                 elif scenario == "audit_investigation":
                     replication_results = (
                         engine.run_audit_investigation()
                     )
+
                 elif scenario == "cross_org_exchange":
                     replication_results = (
                         engine.run_cross_org_exchange()
                     )
-                else:
+
+                elif scenario == "high_volume_ingestion":
                     replication_results = (
                         engine.run_high_volume_ingestion()
                     )
 
+                elif scenario == "consent_revocation":
+                    replication_results = (
+                        engine.run_consent_revocation()
+                    )
+
+                else:
+                    raise ValueError(
+                        f"Unknown scenario: {scenario}"
+                    )
                 all_results.extend(replication_results)
 
                 successful = sum(
@@ -1003,6 +1213,14 @@ def main() -> None:
             compliance_recording_rate=("compliance_recorded", "mean"),
             audit_logging_rate=("audit_logged", "mean"),
             audit_tagging_rate=("audit_tagged", "mean"),
+                        average_revocation_propagation_ms=(
+                "revocation_propagation_ms",
+                "mean",
+            ),
+            average_unauthorized_continuation_ms=(
+                "unauthorized_continuation_ms",
+                "mean",
+            ),
         )
     )
 
@@ -1049,13 +1267,21 @@ def main() -> None:
                 "audit_tagging_rate",
                 "mean",
             ),
+                        mean_revocation_propagation_ms=(
+                "average_revocation_propagation_ms",
+                "mean",
+            ),
+            mean_unauthorized_continuation_ms=(
+                "average_unauthorized_continuation_ms",
+                "mean",
+            ),
         )
     )
 
     
+    print("\nScenario comparison")
     print(overall.to_string(index=False))
     print("\nResults saved in the results directory.")
-    print("\nScenario comparison")
 
 
 if __name__ == "__main__":
