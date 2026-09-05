@@ -1002,6 +1002,112 @@ class SimulationEngine:
                 context.unauthorized_continuation_ms
             ),
         )
+
+    def process_consent_based_access(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process healthcare-data access under active patient consent."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["credential_verification_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["did_resolution_mean_ms"],
+        )
+
+        now, trust_failed = self.trust_lookup(now, context)
+
+        status_failed = False
+        revocation_failed = False
+
+        if not trust_failed:
+            now, status_failed = self.credential_status_check(
+                now,
+                context,
+            )
+
+        if not trust_failed and not status_failed:
+            now = self.policy_and_obligation_handling(
+                now,
+                context,
+            )
+
+            now, revocation_failed = self.revocation_handling(
+                now,
+                context,
+            )
+
+        request_failed = (
+            trust_failed
+            or status_failed
+            or revocation_failed
+        )
+
+        if not request_failed:
+            now = self.data_minimisation(
+                now,
+                context,
+            )
+
+            now = self.fhir_processing(now)
+
+            now = self.compliance_recording(
+                now,
+                context,
+            )
+
+            now = self.audit_logging(
+                now,
+                context,
+            )
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        elif revocation_failed:
+            failure_reason = "revocation_propagation_delay"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="consent_based_access",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+            revocation_propagation_ms=(
+                context.revocation_propagation_ms
+            ),
+            unauthorized_continuation_ms=(
+                context.unauthorized_continuation_ms
+            ),
+        )
     def run_audit_investigation(
         self,
     ) -> List[RequestResult]:
@@ -1091,6 +1197,28 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+    def run_consent_based_access(
+        self,
+    ) -> List[RequestResult]:
+        """Run the consent-based healthcare-access scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["consent_based_access"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.process_consent_based_access(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -1130,8 +1258,9 @@ def main() -> None:
     all_results = []
 
     for architecture in ["baseline", "refined"]:
-        for scenario in [
+         for scenario in [
             "emergency_access",
+            "consent_based_access",
             "audit_investigation",
             "cross_org_exchange",
             "high_volume_ingestion",
@@ -1166,6 +1295,11 @@ def main() -> None:
                     replication_results = (
                         engine.run_consent_revocation()
                     )
+                elif scenario == "consent_based_access":
+                    replication_results = (
+                        engine.run_consent_based_access()
+                    )
+
 
                 else:
                     raise ValueError(
