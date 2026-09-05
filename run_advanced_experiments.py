@@ -181,6 +181,16 @@ class SimulationEngine:
                 capacity=self.parameters["audit_service_capacity"],
                 warmup_s=self.warmup_s,
             ),
+            "connector": ResourcePool(
+                name="connector",
+                capacity=self.parameters["connector_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "fhir": ResourcePool(
+                name="fhir",
+                capacity=self.parameters["fhir_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
         }
 
     def service_time_s(
@@ -444,6 +454,62 @@ class SimulationEngine:
             context.audit_tags += 1
 
         return now
+
+    def connector_processing(
+        self,
+        now: float,
+    ) -> Tuple[float, bool]:
+        """Process a cross-layer request and apply connector failover."""
+
+        if not self.parameters.get("connector_full_in_access", False):
+            degraded_delay = self.service_time_s(
+                self.parameters["connector_processing_mean_ms"] * 0.4
+            )
+            now += degraded_delay
+
+        now = self.resource_step(
+            now,
+            "connector",
+            self.parameters["connector_processing_mean_ms"],
+        )
+
+        connector_failed = (
+            self.random.random()
+            < self.parameters["connector_failure_probability"]
+        )
+
+        if not connector_failed:
+            return now, False
+
+        if self.parameters.get("connector_redundancy_enabled", False):
+            failover_delay = self.service_time_s(
+                self.parameters["connector_processing_mean_ms"] * 0.5
+            )
+            return now + failover_delay, False
+
+        if not self.parameters.get("circuit_breaker_enabled", False):
+            now += self.parameters.get("connector_timeout_ms", 3000) / MS
+
+        return now, True
+
+    def fhir_processing(self, now: float) -> float:
+        """Validate and exchange a FHIR resource."""
+
+        now = self.resource_step(
+            now,
+            "fhir",
+            self.parameters["fhir_validation_mean_ms"],
+        )
+
+        if not self.parameters.get("fhir_complete_in_integration", False):
+            now += self.parameters.get("fhir_cross_layer_penalty_ms", 0) / MS
+
+        return self.resource_step(
+            now,
+            "fhir",
+            self.parameters["fhir_exchange_mean_ms"],
+        )
+
     def generate_arrivals(self, rate: float) -> List[float]:
         """Generate request arrivals using a Poisson process."""
 
@@ -598,6 +664,78 @@ class SimulationEngine:
             circuit_opened=0,
         )
 
+    def process_cross_org_exchange(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Exchange a verified FHIR resource across organizations."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["credential_verification_mean_ms"],
+        )
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["did_resolution_mean_ms"],
+        )
+
+        now, trust_failed = self.trust_lookup(now, context)
+        connector_failed = False
+        status_failed = False
+
+        if not trust_failed:
+            now, connector_failed = self.connector_processing(now)
+
+        if not trust_failed and not connector_failed:
+            now, status_failed = self.credential_status_check(now, context)
+
+        request_failed = trust_failed or connector_failed or status_failed
+
+        if not request_failed:
+            now = self.policy_and_obligation_handling(now, context)
+            now = self.data_minimisation(now, context)
+            now = self.fhir_processing(now)
+            now = self.compliance_recording(now, context)
+            now = self.audit_logging(now, context)
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif connector_failed:
+            failure_reason = "connector_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="cross_org_exchange",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+        )
+
     def run_audit_investigation(
         self,
     ) -> List[RequestResult]:
@@ -620,6 +758,28 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
+    def run_cross_org_exchange(self) -> List[RequestResult]:
+        """Run the cross-organizational FHIR-exchange scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["cross_org_exchange"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.process_cross_org_exchange(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
+
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -662,6 +822,7 @@ def main() -> None:
         for scenario in [
             "emergency_access",
             "audit_investigation",
+            "cross_org_exchange",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -672,9 +833,13 @@ def main() -> None:
 
                 if scenario == "emergency_access":
                     replication_results = engine.run()
-                else:
+                elif scenario == "audit_investigation":
                     replication_results = (
                         engine.run_audit_investigation()
+                    )
+                else:
+                    replication_results = (
+                        engine.run_cross_org_exchange()
                     )
 
                 all_results.extend(replication_results)
@@ -757,7 +922,7 @@ def main() -> None:
                 "compliance_recording_rate",
                 "mean",
             ),
-                        mean_audit_logging_rate=(
+            mean_audit_logging_rate=(
                 "audit_logging_rate",
                 "mean",
             ),
