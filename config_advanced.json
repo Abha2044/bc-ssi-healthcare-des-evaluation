@@ -11,7 +11,8 @@
         "cross_org_exchange": 0.15,
         "high_volume_ingestion": 0.6,
         "consent_revocation": 0.12,
-        "consent_based_access": 0.2
+        "consent_based_access": 0.2,
+        "trust_failure": 0.1
         }
     },
     "baseline": {
@@ -74,6 +75,7 @@
         "session_service_capacity": 1,
         "session_revalidation_interval_seconds": 300,
         "unbounded_next_request_mean_seconds": 600,
+        "forced_trust_failure_probability": 0.4,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -136,6 +138,8 @@
         "session_service_capacity": 3,
         "session_revalidation_interval_seconds": 30,
         "unbounded_next_request_mean_seconds": 600,
+        "trust_failure_probability": 0.01,
+        "forced_trust_failure_probability": 0.2,
         "service_time_distribution": "lognormal"
     }
 }
