@@ -6,11 +6,12 @@
         "warmup_seconds": 120.0,
         "common_random_numbers": true,
         "arrival_rate_per_second": {
-            "emergency_access": 0.18,
-            "audit_investigation": 0.005,
-            "cross_org_exchange": 0.15,
-            "high_volume_ingestion": 0.6,
-            "consent_revocation": 0.12
+        "emergency_access": 0.18,
+        "audit_investigation": 0.005,
+        "cross_org_exchange": 0.15,
+        "high_volume_ingestion": 0.6,
+        "consent_revocation": 0.12,
+        "consent_based_access": 0.2
         }
     },
     "baseline": {
