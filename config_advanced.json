@@ -6,10 +6,10 @@
         "warmup_seconds": 120.0,
         "common_random_numbers": true,
         "arrival_rate_per_second": {
-            "emergency_access": 0.18,
-            "audit_investigation": 0.005,
-            "cross_org_exchange": 0.15,
-            "high_volume_ingestion": 0.6
+        "emergency_access": 0.18,
+        "audit_investigation": 0.005,
+        "cross_org_exchange": 0.15,
+        "high_volume_ingestion": 0.6
         }
     },
     "baseline": {
@@ -60,6 +60,11 @@
         "connector_failure_probability": 0.03,
         "fhir_service_capacity": 2,
         "connector_capacity": 1,
+        "queue_processing_mean_ms": 24,
+        "orchestration_mean_ms": 12,
+        "queue_capacity": 2,
+        "orchestrator_capacity": 1,
+        "ingestion_trust_check_probability": 0.3,
         "service_time_distribution": "lognormal"
     },
     "refined": {
@@ -110,6 +115,11 @@
         "connector_failure_probability": 0.01,
         "fhir_service_capacity": 3,
         "connector_capacity": 3,
+        "queue_processing_mean_ms": 24,
+        "orchestration_mean_ms": 12,
+        "queue_capacity": 5,
+        "orchestrator_capacity": 3,
+        "ingestion_trust_check_probability": 0.3,
         "service_time_distribution": "lognormal"
     }
 }
