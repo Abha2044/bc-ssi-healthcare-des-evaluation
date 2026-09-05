@@ -1012,6 +1012,81 @@ class SimulationEngine:
             ),
         )
 
+    def process_lab_ingestion_recovery(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process laboratory-data ingestion during disruption."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "queue",
+            self.parameters["queue_processing_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "orchestrator",
+            self.parameters["orchestration_mean_ms"],
+        )
+
+        trust_failed = False
+
+        if (
+            self.random.random()
+            < self.parameters["ingestion_trust_check_probability"]
+        ):
+            now, trust_failed = self.trust_lookup(
+                now,
+                context,
+                forced_failure=True,
+            )
+
+        connector_failed = False
+
+        if not trust_failed:
+            now, connector_failed = self.connector_processing(now)
+
+        if not trust_failed and not connector_failed:
+            now = self.fhir_processing(now)
+            now = self.compliance_recording(now, context)
+            now = self.audit_logging(now, context)
+
+        request_failed = trust_failed or connector_failed
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif connector_failed:
+            failure_reason = "connector_failure"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="lab_ingestion_recovery",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+        )
     def process_consent_based_access(
         self,
         request_id: int,
@@ -1327,7 +1402,31 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+    def run_lab_ingestion_recovery(
+        self,
+    ) -> List[RequestResult]:
+        """Run the laboratory-ingestion recovery scenario."""
 
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["lab_ingestion_recovery"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(
+            arrivals,
+            start=1,
+        ):
+            result = self.process_lab_ingestion_recovery(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -1375,6 +1474,7 @@ def main() -> None:
             "high_volume_ingestion",
             "consent_revocation",
             "trust_failure",
+            "lab_ingestion_recovery",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -1415,7 +1515,10 @@ def main() -> None:
                         engine.run_trust_failure()
                     )
 
-
+                elif scenario == "lab_ingestion_recovery":
+                    replication_results = (
+                        engine.run_lab_ingestion_recovery()
+                    )
                 else:
                     raise ValueError(
                         f"Unknown scenario: {scenario}"
