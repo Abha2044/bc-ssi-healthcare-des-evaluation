@@ -545,6 +545,81 @@ class SimulationEngine:
             
         )
 
+    def process_audit_investigation(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Reconstruct an audit trail for an investigation."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "audit",
+            self.parameters["audit_reconstruction_mean_ms"],
+        )
+
+        reconstruction_failed = (
+            self.random.random()
+            < self.parameters[
+                "audit_reconstruction_failure_probability"
+            ]
+        )
+
+        if self.parameters.get("audit_tagging_enabled", False):
+            context.audit_tags = 1
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="audit_investigation",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not reconstruction_failed,
+            failure_reason=(
+                "audit_reconstruction_failure"
+                if reconstruction_failed
+                else ""
+            ),
+            trust_lookups=0,
+            trust_cache_hit=0,
+            status_check_used=0,
+            obligations_executed=0,
+            minimisation_applied=0,
+            compliance_recorded=0,
+            audit_logged=0,
+            audit_tagged=context.audit_tags,
+            retry_attempts=0,
+            fallback_used=0,
+            circuit_opened=0,
+        )
+
+    def run_audit_investigation(
+        self,
+    ) -> List[RequestResult]:
+        """Run the audit-investigation scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["audit_investigation"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(arrivals, start=1):
+            result = self.process_audit_investigation(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -584,26 +659,37 @@ def main() -> None:
     all_results = []
 
     for architecture in ["baseline", "refined"]:
-        for replication in range(replication_count):
-            engine = SimulationEngine(
-                config,
-                architecture,
-                replication,
-            )
+        for scenario in [
+            "emergency_access",
+            "audit_investigation",
+        ]:
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    config,
+                    architecture,
+                    replication,
+                )
 
-            replication_results = engine.run()
-            all_results.extend(replication_results)
+                if scenario == "emergency_access":
+                    replication_results = engine.run()
+                else:
+                    replication_results = (
+                        engine.run_audit_investigation()
+                    )
 
-            successful = sum(
-                result.success
-                for result in replication_results
-            )
+                all_results.extend(replication_results)
 
-            print(
-                f"{architecture}, replication {replication + 1}: "
-                f"{len(replication_results)} requests, "
-                f"{successful} successful"
-            )
+                successful = sum(
+                    result.success
+                    for result in replication_results
+                )
+
+                print(
+                    f"{architecture}, {scenario}, "
+                    f"replication {replication + 1}: "
+                    f"{len(replication_results)} requests, "
+                    f"{successful} successful"
+                )
 
     detail = pd.DataFrame(
         asdict(result)
@@ -612,7 +698,7 @@ def main() -> None:
 
     summary = (
         detail.groupby(
-            ["architecture", "replication"],
+            ["architecture", "scenario", "replication"],
             as_index=False,
         )
         .agg(
@@ -650,7 +736,7 @@ def main() -> None:
     )
 
     overall = (
-        summary.groupby("architecture", as_index=False)
+        summary.groupby(["architecture", "scenario"], as_index=False,)
         .agg(
             mean_success_rate=("success_rate", "mean"),
             mean_latency_ms=("average_latency_ms", "mean"),
@@ -685,6 +771,7 @@ def main() -> None:
     print("\nBaseline-versus-refined comparison")
     print(overall.to_string(index=False))
     print("\nResults saved in the results directory.")
+    print("\nScenario comparison")
 
 
 if __name__ == "__main__":
