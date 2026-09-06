@@ -14,7 +14,8 @@
             "consent_based_access": 0.2,
             "trust_failure": 0.1,
             "lab_ingestion_recovery": 0.1,
-            "multi_device_access": 0.06
+            "multi_device_access": 0.06,
+            "research_donation": 0.05
         }
     },
     "baseline": {
@@ -44,6 +45,9 @@
         "obligation_handling_mean_ms": 90,
         "policy_engine_capacity": 2,
         "data_minimization_enabled": false,
+        "anonymization_enabled": false,
+        "anonymization_mean_ms": 120,
+        "anonymizer_capacity": 1,
         "compliance_required": false,
         "compliance_optional_deployment_probability": 0.5,
         "data_minimization_mean_ms": 45,
@@ -109,6 +113,9 @@
         "obligation_handling_mean_ms": 45,
         "policy_engine_capacity": 3,
         "data_minimization_enabled": true,
+        "anonymization_enabled": true,
+        "anonymization_mean_ms": 120,
+        "anonymizer_capacity": 2,
         "compliance_required": true,
         "compliance_optional_deployment_probability": 0.5,
         "data_minimization_mean_ms": 35,
