@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import random
+from copy import deepcopy 
 import pandas as pd
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -1721,7 +1722,116 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+def run_selected_scenario(
+    engine: SimulationEngine,
+    scenario: str,
+) -> List[RequestResult]:
+    """Run one named simulation scenario."""
 
+    if scenario == "emergency_access":
+        return engine.run()
+    if scenario == "consent_based_access":
+        return engine.run_consent_based_access()
+    if scenario == "audit_investigation":
+        return engine.run_audit_investigation()
+    if scenario == "cross_org_exchange":
+        return engine.run_cross_org_exchange()
+    if scenario == "high_volume_ingestion":
+        return engine.run_high_volume_ingestion()
+    if scenario == "consent_revocation":
+        return engine.run_consent_revocation()
+    if scenario == "trust_failure":
+        return engine.run_trust_failure()
+    if scenario == "lab_ingestion_recovery":
+        return engine.run_lab_ingestion_recovery()
+    if scenario == "multi_device_access":
+        return engine.run_multi_device_access()
+    if scenario == "research_donation":
+        return engine.run_research_donation()
+
+    raise ValueError(f"Unknown scenario: {scenario}")
+def run_workload_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """Evaluate all architectures under increasing workloads."""
+
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    scenarios = [
+        "emergency_access",
+        "consent_based_access",
+        "audit_investigation",
+        "cross_org_exchange",
+        "high_volume_ingestion",
+        "consent_revocation",
+        "trust_failure",
+        "lab_ingestion_recovery",
+        "multi_device_access",
+        "research_donation",
+    ]
+
+    multipliers = config["experiments"][
+        "workload_multipliers"
+    ]
+
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    rows = []
+
+    for multiplier in multipliers:
+        experiment_config = deepcopy(config)
+
+        arrival_rates = experiment_config["simulation"][
+            "arrival_rate_per_second"
+        ]
+
+        for scenario in arrival_rates:
+            arrival_rates[scenario] *= float(multiplier)
+
+        for architecture in architectures:
+            for scenario in scenarios:
+                for replication in range(replication_count):
+                    engine = SimulationEngine(
+                        experiment_config,
+                        architecture,
+                        replication,
+                    )
+
+                    results = run_selected_scenario(
+                        engine,
+                        scenario,
+                    )
+
+                    if not results:
+                        continue
+
+                    rows.append(
+                        {
+                            "workload_multiplier": multiplier,
+                            "architecture": architecture,
+                            "scenario": scenario,
+                            "replication": replication,
+                            "total_requests": len(results),
+                            "success_rate": sum(
+                                result.success
+                                for result in results
+                            )
+                            / len(results),
+                            "average_latency_ms": sum(
+                                result.latency_ms
+                                for result in results
+                            )
+                            / len(results),
+                        }
+                    )
+
+    return pd.DataFrame(rows)
 
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
@@ -1881,7 +1991,35 @@ def main() -> None:
         output_directory / "baseline_refined_by_replication.csv",
         index=False,
     )
+    print("\nRunning workload sensitivity experiment...")
+    
+    workload_results = run_workload_sensitivity(config)
 
+    workload_results.to_csv(
+        output_directory / "workload_sensitivity_by_replication.csv",
+        index=False,
+    )
+    print("Workload sensitivity experiment completed.")
+    workload_summary = (
+        workload_results.groupby(
+            [
+                "workload_multiplier",
+                "architecture",
+                "scenario",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
+
+    workload_summary.to_csv(
+        output_directory / "workload_sensitivity_summary.csv",
+        index=False,
+    )
     overall = (
         summary.groupby(["architecture", "scenario"], as_index=False,)
         .agg(
