@@ -13,7 +13,8 @@
         "consent_revocation": 0.12,
         "consent_based_access": 0.2,
         "trust_failure": 0.1,
-        "lab_ingestion_recovery": 0.1
+        "lab_ingestion_recovery": 0.1,
+        "multi_device_access": 0.06
         }
     },
     "baseline": {
