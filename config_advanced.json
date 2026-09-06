@@ -6,15 +6,15 @@
         "warmup_seconds": 120.0,
         "common_random_numbers": true,
         "arrival_rate_per_second": {
-        "emergency_access": 0.18,
-        "audit_investigation": 0.005,
-        "cross_org_exchange": 0.15,
-        "high_volume_ingestion": 0.6,
-        "consent_revocation": 0.12,
-        "consent_based_access": 0.2,
-        "trust_failure": 0.1,
-        "lab_ingestion_recovery": 0.1,
-        "multi_device_access": 0.06
+            "emergency_access": 0.18,
+            "audit_investigation": 0.005,
+            "cross_org_exchange": 0.15,
+            "high_volume_ingestion": 0.6,
+            "consent_revocation": 0.12,
+            "consent_based_access": 0.2,
+            "trust_failure": 0.1,
+            "lab_ingestion_recovery": 0.1,
+            "multi_device_access": 0.06
         }
     },
     "baseline": {
@@ -71,6 +71,8 @@
         "orchestrator_capacity": 1,
         "ingestion_trust_check_probability": 0.3,
         "session_manager_enabled": false,
+        "cross_device_sync_enabled": false,
+        "devices_per_episode": 3,
         "revocation_check_mean_ms": 70,
         "session_sync_mean_ms": 120,
         "revocation_delay_failure_probability": 0.08,
@@ -134,6 +136,8 @@
         "orchestrator_capacity": 3,
         "ingestion_trust_check_probability": 0.3,
         "session_manager_enabled": true,
+        "cross_device_sync_enabled": true,
+        "devices_per_episode": 3,
         "revocation_check_mean_ms": 45,
         "session_sync_mean_ms": 35,
         "revocation_delay_failure_probability": 0.02,
