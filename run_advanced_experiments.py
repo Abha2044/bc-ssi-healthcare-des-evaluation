@@ -1012,6 +1012,111 @@ class SimulationEngine:
             ),
         )
 
+    def process_multi_device_access(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process one healthcare episode across multiple devices."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        device_count = max(
+            1,
+            int(self.parameters.get("devices_per_episode", 3)),
+        )
+
+        trust_failed = False
+        status_failed = False
+
+        for device_index in range(device_count):
+            use_shared_session = (
+                device_index > 0
+                and self.parameters.get(
+                    "cross_device_sync_enabled",
+                    False,
+                )
+            )
+
+            if use_shared_session:
+                now = self.resource_step(
+                    now,
+                    "session",
+                    self.parameters["session_sync_mean_ms"],
+                )
+                continue
+
+            now = self.resource_step(
+                now,
+                "verifier",
+                self.parameters[
+                    "credential_verification_mean_ms"
+                ],
+            )
+
+            now = self.resource_step(
+                now,
+                "verifier",
+                self.parameters["did_resolution_mean_ms"],
+            )
+
+            now, trust_failed = self.trust_lookup(
+                now,
+                context,
+            )
+
+            if trust_failed:
+                break
+
+            now, status_failed = self.credential_status_check(
+                now,
+                context,
+            )
+
+            if status_failed:
+                break
+
+        request_failed = trust_failed or status_failed
+
+        if not request_failed:
+            now = self.policy_and_obligation_handling(
+                now,
+                context,
+            )
+            now = self.data_minimisation(now, context)
+            now = self.compliance_recording(now, context)
+            now = self.audit_logging(now, context)
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="multi_device_access",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+        )
     def process_lab_ingestion_recovery(
         self,
         request_id: int,
@@ -1427,6 +1532,32 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
+    def run_multi_device_access(
+        self,
+    ) -> List[RequestResult]:
+        """Run the multi-device healthcare-access scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["multi_device_access"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(
+            arrivals,
+            start=1,
+        ):
+            result = self.process_multi_device_access(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -1475,6 +1606,7 @@ def main() -> None:
             "consent_revocation",
             "trust_failure",
             "lab_ingestion_recovery",
+            "multi_device_access",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -1518,6 +1650,11 @@ def main() -> None:
                 elif scenario == "lab_ingestion_recovery":
                     replication_results = (
                         engine.run_lab_ingestion_recovery()
+                    )
+
+                elif scenario == "multi_device_access":
+                    replication_results = (
+                        engine.run_multi_device_access()
                     )
                 else:
                     raise ValueError(
