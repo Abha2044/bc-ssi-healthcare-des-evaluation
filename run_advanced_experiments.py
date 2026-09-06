@@ -31,6 +31,7 @@ class RequestContext:
     compliance:int = 0
     audit_logs: int = 0
     audit_tags: int = 0
+    anonymization: int = 0
     revocation_propagation_ms: float = 0.0
     unauthorized_continuation_ms: float = 0.0
 
@@ -56,10 +57,11 @@ class RequestResult:
     circuit_opened: int
     minimisation_applied: int
     compliance_recorded: int
-    audit_logged: int
+    audit_logged: int                               
     audit_tagged: int
     revocation_propagation_ms: float = 0.0
     unauthorized_continuation_ms: float = 0.0
+    anonymization_applied: int = 0
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
 
@@ -177,6 +179,13 @@ class SimulationEngine:
             "compliance": ResourcePool(
                 name="compliance",
                 capacity=self.parameters["compliance_service_capacity"],
+                warmup_s=self.warmup_s,
+            ),
+            "anonymizer": ResourcePool(
+                name="anonymizer",
+                capacity=self.parameters[
+                    "anonymizer_capacity"
+                ],
                 warmup_s=self.warmup_s,
             ),
             "audit": ResourcePool(
@@ -501,6 +510,26 @@ class SimulationEngine:
 
         return now + processing_time
 
+    def anonymization_processing(
+        self,
+        now: float,
+        context: RequestContext,
+    ) -> float:
+        """Anonymize health data before research donation."""
+
+        if not self.parameters.get(
+            "anonymization_enabled",
+            False,
+        ):
+            return now
+
+        context.anonymization = 1
+
+        return self.resource_step(
+            now,
+            "anonymizer",
+            self.parameters["anonymization_mean_ms"],
+        )
     def compliance_recording(
         self,
         now: float,
@@ -1012,6 +1041,94 @@ class SimulationEngine:
             ),
         )
 
+    def process_research_donation(
+        self,
+        request_id: int,
+        arrival_time: float,
+    ) -> RequestResult:
+        """Process consented health-data donation for research."""
+
+        context = RequestContext()
+        now = arrival_time
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["credential_verification_mean_ms"],
+        )
+
+        now = self.resource_step(
+            now,
+            "verifier",
+            self.parameters["did_resolution_mean_ms"],
+        )
+
+        now, trust_failed = self.trust_lookup(now, context)
+        status_failed = False
+
+        if not trust_failed:
+            now, status_failed = self.credential_status_check(
+                now,
+                context,
+            )
+
+        privacy_failed = not self.parameters.get(
+            "anonymization_enabled",
+            False,
+        )
+
+        if not trust_failed and not status_failed:
+            now = self.policy_and_obligation_handling(
+                now,
+                context,
+            )
+            now = self.data_minimisation(now, context)
+            now = self.anonymization_processing(now, context)
+
+            if not privacy_failed:
+                now = self.fhir_processing(now)
+
+            now = self.compliance_recording(now, context)
+            now = self.audit_logging(now, context)
+
+        request_failed = (
+            trust_failed
+            or status_failed
+            or privacy_failed
+        )
+
+        if trust_failed:
+            failure_reason = "trust_resolution_failure"
+        elif status_failed:
+            failure_reason = "credential_status_failure"
+        elif privacy_failed:
+            failure_reason = "anonymization_unavailable"
+        else:
+            failure_reason = ""
+
+        return RequestResult(
+            request_id=request_id,
+            replication=self.replication,
+            architecture=self.architecture,
+            scenario="research_donation",
+            start_time_s=arrival_time,
+            end_time_s=now,
+            latency_ms=(now - arrival_time) * MS,
+            success=not request_failed,
+            failure_reason=failure_reason,
+            trust_lookups=context.trust_lookups,
+            trust_cache_hit=context.cache_hits,
+            status_check_used=context.status_checks,
+            obligations_executed=context.obligations,
+            retry_attempts=context.retry_attempts,
+            fallback_used=context.fallback_used,
+            circuit_opened=context.circuit_opened,
+            minimisation_applied=context.minimisation,
+            compliance_recorded=context.compliance,
+            audit_logged=context.audit_logs,
+            audit_tagged=context.audit_tags,
+            anonymization_applied=context.anonymization,
+        )
     def process_multi_device_access(
         self,
         request_id: int,
@@ -1558,6 +1675,32 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
+    def run_research_donation(
+        self,
+    ) -> List[RequestResult]:
+        """Run the research-donation scenario."""
+
+        rate = self.simulation[
+            "arrival_rate_per_second"
+        ]["research_donation"]
+
+        arrivals = self.generate_arrivals(rate)
+        results = []
+
+        for request_id, arrival_time in enumerate(
+            arrivals,
+            start=1,
+        ):
+            result = self.process_research_donation(
+                request_id,
+                arrival_time,
+            )
+
+            if arrival_time >= self.warmup_s:
+                results.append(result)
+
+        return results
     def run(self) -> List[RequestResult]:
         """Run the baseline emergency-access scenario."""
 
@@ -1607,6 +1750,7 @@ def main() -> None:
             "trust_failure",
             "lab_ingestion_recovery",
             "multi_device_access",
+            "research_donation",
         ]:
             for replication in range(replication_count):
                 engine = SimulationEngine(
@@ -1656,6 +1800,10 @@ def main() -> None:
                     replication_results = (
                         engine.run_multi_device_access()
                     )
+                elif scenario == "research_donation":
+                    replication_results = (
+                        engine.run_research_donation()
+                    )
                 else:
                     raise ValueError(
                         f"Unknown scenario: {scenario}"
@@ -1704,6 +1852,10 @@ def main() -> None:
             audit_tagging_rate=("audit_tagged", "mean"),
                         average_revocation_propagation_ms=(
                 "revocation_propagation_ms",
+                "mean",
+            ),
+            anonymization_rate=(
+                "anonymization_applied",
                 "mean",
             ),
             average_unauthorized_continuation_ms=(
@@ -1756,7 +1908,12 @@ def main() -> None:
                 "audit_tagging_rate",
                 "mean",
             ),
-                        mean_revocation_propagation_ms=(
+
+            mean_anonymization_rate=(
+                "anonymization_rate",
+                "mean",
+            ),
+            mean_revocation_propagation_ms=(
                 "average_revocation_propagation_ms",
                 "mean",
             ),
