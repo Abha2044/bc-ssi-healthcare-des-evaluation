@@ -1739,7 +1739,11 @@ def main() -> None:
 
     all_results = []
 
-    for architecture in ["baseline", "refined"]:
+    for architecture in [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]:
          for scenario in [
             "emergency_access",
             "consent_based_access",
