@@ -148,7 +148,7 @@
         "revocation_check_mean_ms": 70,
         "session_sync_mean_ms": 120,
         "revocation_delay_failure_probability": 0.08,
-        "session_service_capacity": 3     ,
+        "session_service_capacity": 3,
         "session_revalidation_interval_seconds": 300,
         "unbounded_next_request_mean_seconds": 600,
         "forced_trust_failure_probability": 0.4,
@@ -222,5 +222,12 @@
         "trust_failure_probability": 0.01,
         "forced_trust_failure_probability": 0.2,
         "service_time_distribution": "lognormal"
+    },
+    "experiments": {
+        "workload_multipliers": [
+            1,
+            2,
+            5
+        ]
     }
 }
