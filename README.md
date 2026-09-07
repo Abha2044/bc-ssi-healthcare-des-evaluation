@@ -3,7 +3,7 @@
 This repository contains a discrete-event simulation used to evaluate the
 baseline and refined BC-SSI healthcare reference architectures.
 
-The implementation is being reconstructed incrementally to establish a clear,
+The implementation is being constructed incrementally to establish a clear,
 testable, and reproducible project structure.
 
 ## Current status
