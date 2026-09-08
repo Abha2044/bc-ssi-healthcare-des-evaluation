@@ -228,6 +228,12 @@
             1,
             2,
             5
+        ],
+        "trust_failure_probabilities": [
+            0.01,
+            0.05,
+            0.1,
+            0.2
         ]
     }
 }
