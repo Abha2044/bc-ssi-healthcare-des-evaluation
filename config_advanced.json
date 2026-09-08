@@ -31,6 +31,8 @@
         "cached_trust_lookup_mean_ms": 450,
         "cached_trust_lookup_std_ms": 90,
         "trust_cache_hit_probability": 0.0,
+        "trust_cache_ttl_seconds": 0,
+        "trust_revocation_events_per_hour": 1.0,
         "verifier_capacity": 2,
         "trust_service_capacity": 1,
         "trust_timeout_ms": 5000,
@@ -99,6 +101,8 @@
         "cached_trust_lookup_mean_ms": 450,
         "cached_trust_lookup_std_ms": 90,
         "trust_cache_hit_probability": 0.0,
+        "trust_cache_ttl_seconds": 0,
+        "trust_revocation_events_per_hour": 1.0,
         "verifier_capacity": 3,
         "trust_service_capacity": 2,
         "trust_timeout_ms": 5000,
@@ -167,6 +171,8 @@
         "cached_trust_lookup_mean_ms": 450,
         "cached_trust_lookup_std_ms": 90,
         "trust_cache_hit_probability": 0.9,
+        "trust_cache_ttl_seconds": 300,
+        "trust_revocation_events_per_hour": 1.0,
         "verifier_capacity": 3,
         "trust_service_capacity": 2,
         "trust_timeout_ms": 5000,
@@ -246,6 +252,17 @@
             2,
             3,
             5
-        ]
+        ],
+        "cache_ttl_seconds": [
+            30,
+            120,
+            300,
+            900,
+            3600
+            ],
+            "cache_hit_model_intercept": 0.45,
+            "cache_hit_model_slope": 0.18,
+            "cache_hit_model_cap": 0.9
+        
     }
 }
