@@ -1823,6 +1823,7 @@ def run_workload_sensitivity(
                                 for result in results
                             )
                             / len(results),
+                                                    
                             "average_latency_ms": sum(
                                 result.latency_ms
                                 for result in results
@@ -1832,6 +1833,118 @@ def run_workload_sensitivity(
                     )
 
     return pd.DataFrame(rows)
+
+def run_trust_failure_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """
+    Test how trust-service failures affect each architecture.
+
+    The same failure probabilities and random seeds are used for
+    baseline, capacity-matched and refined configurations. This
+    supports a controlled comparison of their resilience mechanisms.
+    """
+
+    # Evaluate the original architecture, the capacity control,
+    # and the fully refined architecture.
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    # Failure probabilities are defined in config_advanced.json.
+    # For example, 0.10 means a 10% failure probability.
+    probabilities = config["experiments"][
+        "trust_failure_probabilities"
+    ]
+
+    # Repeat every experimental condition to reduce the influence
+    # of one unusually good or bad random run.
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    rows = []
+
+    for probability in probabilities:
+        # Create an independent configuration so the original
+        # configuration is not modified by the experiment.
+        experiment_config = deepcopy(config)
+
+        for architecture in architectures:
+            # Apply the same forced failure probability to all three
+            # configurations for a fair resilience comparison.
+            experiment_config[architecture][
+                "forced_trust_failure_probability"
+            ] = float(probability)
+
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    experiment_config,
+                    architecture,
+                    replication,
+                )
+
+                # Only the dedicated trust-failure scenario is run.
+                results = engine.run_trust_failure()
+
+                # Protect the calculations if a replication happens
+                # to contain no measured requests after warm-up.
+                if not results:
+                    continue
+
+                # Store one summarized row for this replication.
+                rows.append(
+                    {
+                        "trust_failure_probability": probability,
+                        "architecture": architecture,
+                        "replication": replication,
+                        "total_requests": len(results),
+                        "success_rate": sum(
+                            result.success
+                            for result in results
+                        )
+                        / len(results),
+                        "trust_resolution_success_rate": sum(
+                            result.failure_reason
+                            != "trust_resolution_failure"
+                            for result in results
+                        )
+                        / len(results),
+                        "status_rejection_rate": sum(
+                            result.failure_reason
+                            == "credential_status_failure"
+                            for result in results
+                        )
+                        / len(results),
+                        "average_latency_ms": sum(
+                            result.latency_ms
+                            for result in results
+                        )
+                        / len(results),
+                        "average_retry_attempts": sum(
+                            result.retry_attempts
+                            for result in results
+                        )
+                        / len(results),
+                        "fallback_rate": sum(
+                            result.fallback_used
+                            for result in results
+                        )
+                        / len(results),
+                        "circuit_open_rate": sum(
+                            result.circuit_opened
+                            for result in results
+                        )
+                        / len(results),
+                    }
+                )
+
+    # Convert the replication records into a table that can be
+    # summarized and saved as a CSV file.
+    return pd.DataFrame(rows)
+
 
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
@@ -2000,6 +2113,63 @@ def main() -> None:
         index=False,
     )
     print("Workload sensitivity experiment completed.")
+
+        # Run the controlled trust-service failure experiment.
+    print("\nRunning trust-failure sensitivity experiment...")
+
+    trust_failure_results = (
+        run_trust_failure_sensitivity(config)
+    )
+
+    # Save one result row for every architecture, probability
+    # and replication.
+    trust_failure_results.to_csv(
+        output_directory
+        / "trust_failure_sensitivity_by_replication.csv",
+        index=False,
+    )
+
+        # Average the ten replications for each experimental condition.
+    trust_failure_summary = (
+        trust_failure_results.groupby(
+            [
+                "trust_failure_probability",
+                "architecture",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_trust_resolution_success_rate=(
+                "trust_resolution_success_rate",
+                "mean",
+            ),
+            mean_status_rejection_rate=(
+                "status_rejection_rate",
+                "mean",
+            ),
+            mean_latency_ms=("average_latency_ms", "mean"),
+            mean_retry_attempts=(
+                "average_retry_attempts",
+                "mean",
+            ),
+            mean_fallback_rate=("fallback_rate", "mean"),
+            mean_circuit_open_rate=(
+                "circuit_open_rate",
+                "mean",
+            ),
+        )
+    )
+
+    # Save the final comparison table used for analysis.
+    trust_failure_summary.to_csv(
+        output_directory
+        / "trust_failure_sensitivity_summary.csv",
+        index=False,
+    )
+
+    print("Trust-failure sensitivity experiment completed.")
     workload_summary = (
         workload_results.groupby(
             [
