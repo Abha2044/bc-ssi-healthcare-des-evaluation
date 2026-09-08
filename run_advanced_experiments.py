@@ -1835,7 +1835,104 @@ def run_workload_sensitivity(
                     )
 
     return pd.DataFrame(rows)
+def run_session_revalidation_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """
+    Evaluate the refined session manager under revocation activity.
 
+    Short revalidation intervals can reduce the time that revoked
+    access remains usable, but they require more frequent checks.
+    """
+
+    revocation_rates = config["experiments"][
+        "trust_revocation_events_per_hour"
+    ]
+
+    revalidation_intervals = config["experiments"][
+        "session_revalidation_intervals_seconds"
+    ]
+
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    rows = []
+
+    for revocations_per_hour in revocation_rates:
+        for interval_seconds in revalidation_intervals:
+            experiment_config = deepcopy(config)
+
+            experiment_config["refined"][
+                "trust_revocation_events_per_hour"
+            ] = float(revocations_per_hour)
+
+            experiment_config["refined"][
+                "session_revalidation_interval_seconds"
+            ] = float(interval_seconds)
+
+            # This represents the expected number of periodic checks
+            # performed by one continuously active session per hour.
+            expected_checks_per_session_hour = (
+                3600.0 / float(interval_seconds)
+            )
+
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    experiment_config,
+                    "refined",
+                    replication,
+                )
+
+                results = engine.run_consent_revocation()
+
+                if not results:
+                    continue
+
+                mean_continuation_ms = sum(
+                    result.unauthorized_continuation_ms
+                    for result in results
+                ) / len(results)
+
+                # Estimate accumulated exposure per hour by combining
+                # revocation frequency with continuation per event.
+                estimated_exposure_seconds_per_hour = (
+                    float(revocations_per_hour)
+                    * mean_continuation_ms
+                    / 1000.0
+                )
+
+                rows.append(
+                    {
+                        "revocations_per_hour": revocations_per_hour,
+                        "revalidation_interval_seconds": (
+                            interval_seconds
+                        ),
+                        "architecture": "refined",
+                        "replication": replication,
+                        "expected_checks_per_session_hour": (
+                            expected_checks_per_session_hour
+                        ),
+                        "mean_unauthorized_continuation_ms": (
+                            mean_continuation_ms
+                        ),
+                        "estimated_exposure_seconds_per_hour": (
+                            estimated_exposure_seconds_per_hour
+                        ),
+                        "success_rate": sum(
+                            result.success
+                            for result in results
+                        )
+                        / len(results),
+                        "average_latency_ms": sum(
+                            result.latency_ms
+                            for result in results
+                        )
+                        / len(results),
+                    }
+                )
+
+    return pd.DataFrame(rows)
 def run_trust_failure_sensitivity(
     config: Dict,
 ) -> pd.DataFrame:
@@ -2587,7 +2684,49 @@ def main() -> None:
     )
 
     print("Cache-TTL sensitivity experiment completed.")
+    # Run the session-revalidation sensitivity experiment.
+    print("\nRunning session-revalidation sensitivity experiment...")
+    session_revalidation_results = (
+        run_session_revalidation_sensitivity(config)
+    )
+    session_revalidation_summary = (
+        session_revalidation_results.groupby(
+            [
+                "revocations_per_hour",
+                "revalidation_interval_seconds",
+                "architecture",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_expected_checks_per_session_hour=(
+                "expected_checks_per_session_hour",
+                "mean",
+            ),
+            mean_unauthorized_continuation_ms=(
+                "mean_unauthorized_continuation_ms",
+                "mean",
+            ),
+            mean_estimated_exposure_seconds_per_hour=(
+                "estimated_exposure_seconds_per_hour",
+                "mean",
+            ),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
 
+    session_revalidation_summary.to_csv(
+        output_directory
+        / "session_revalidation_sensitivity_summary.csv",
+        index=False,
+    )
+    session_revalidation_results.to_csv(
+        output_directory
+        / "session_revalidation_sensitivity_by_replication.csv",
+        index=False,
+    )
+    print( "Session-revalidation sensitivity experiment completed.")
     workload_summary = (
         workload_results.groupby(
             [
