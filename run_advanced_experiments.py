@@ -1945,6 +1945,95 @@ def run_trust_failure_sensitivity(
     # summarized and saved as a CSV file.
     return pd.DataFrame(rows)
 
+def run_credential_status_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """
+    Test emergency access under status-service failures.
+
+    Baseline configurations do not perform explicit credential-status
+    checks. The refined architecture checks credential validity and
+    therefore exposes status-service availability and rejection effects.
+    """
+
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    probabilities = config["experiments"][
+        "credential_status_failure_probabilities"
+    ]
+
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    rows = []
+
+    for probability in probabilities:
+        # Preserve the original configuration for later experiments.
+        experiment_config = deepcopy(config)
+
+        for architecture in architectures:
+            # Apply an identical status-service failure probability
+            # wherever explicit status checking is enabled.
+            experiment_config[architecture][
+                "credential_status_failure_probability"
+            ] = float(probability)
+
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    experiment_config,
+                    architecture,
+                    replication,
+                )
+
+                # Emergency access provides a clear credential-check path.
+                results = engine.run()
+
+                if not results:
+                    continue
+
+                rows.append(
+                    {
+                        "status_failure_probability": probability,
+                        "architecture": architecture,
+                        "replication": replication,
+                        "total_requests": len(results),
+                        "success_rate": sum(
+                            result.success
+                            for result in results
+                        )
+                        / len(results),
+                        "status_check_rate": sum(
+                            result.status_check_used
+                            for result in results
+                        )
+                        / len(results),
+                                                "status_check_failure_rate": sum(
+                            result.failure_reason
+                            == "credential_status_failure"
+                            for result in results
+                        )
+                        / len(results),
+                        "status_rejection_rate": sum(
+                            result.failure_reason
+                            == "credential_status_failure"
+                            for result in results
+                        )
+                        / len(results),
+                        "average_latency_ms": sum(
+                            result.latency_ms
+                            for result in results
+                        )
+                        / len(results),
+                    }
+                )
+
+    return pd.DataFrame(rows)
+
 
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
@@ -2170,6 +2259,48 @@ def main() -> None:
     )
 
     print("Trust-failure sensitivity experiment completed.")
+
+    # Run the credential-status service sensitivity experiment.
+    print("\nRunning credential-status sensitivity experiment...")
+
+    status_failure_results = (
+        run_credential_status_sensitivity(config)
+    )
+
+    # Save one row for every probability, architecture and replication.
+    status_failure_results.to_csv(
+        output_directory
+        / "credential_status_sensitivity_by_replication.csv",
+        index=False,
+    )
+    # Average the ten replications for each probability and architecture.
+    status_failure_summary = (
+        status_failure_results.groupby(
+            [
+                "status_failure_probability",
+                "architecture",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_status_check_rate=("status_check_rate", "mean"),
+            mean_status_check_failure_rate=(
+                "status_check_failure_rate",
+                "mean",
+            ),
+            mean_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
+
+    status_failure_summary.to_csv(
+        output_directory
+        / "credential_status_sensitivity_summary.csv",
+        index=False,
+    )
+
+    print("Credential-status sensitivity experiment completed.")
     workload_summary = (
         workload_results.groupby(
             [
