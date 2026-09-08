@@ -2116,7 +2116,119 @@ def run_connector_capacity_sensitivity(
                 )
 
     return pd.DataFrame(rows)
+def run_cache_ttl_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """
+    Evaluate the refined trust cache at different TTL values.
 
+    A longer TTL can increase cache hits and reduce latency, but it
+    also increases the possibility that cached trust information
+    becomes stale after a revocation.
+    """
+
+    ttl_values = config["experiments"]["cache_ttl_seconds"]
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    intercept = float(
+        config["experiments"]["cache_hit_model_intercept"]
+    )
+    slope = float(
+        config["experiments"]["cache_hit_model_slope"]
+    )
+    maximum_hit_probability = float(
+        config["experiments"]["cache_hit_model_cap"]
+    )
+
+    rows = []
+
+    for ttl_seconds in ttl_values:
+        experiment_config = deepcopy(config)
+
+        # Estimate cache-hit probability using a logarithmic model.
+        # Longer TTL values increase reuse, but the configured cap
+        # prevents probabilities greater than the assumed maximum.
+        cache_hit_probability = min(
+            maximum_hit_probability,
+            intercept + slope * math.log10(max(ttl_seconds, 1)),
+        )
+
+        experiment_config["refined"][
+            "trust_cache_ttl_seconds"
+        ] = int(ttl_seconds)
+
+        experiment_config["refined"][
+            "trust_cache_hit_probability"
+        ] = cache_hit_probability
+
+        revocations_per_hour = float(
+            experiment_config["refined"][
+                "trust_revocation_events_per_hour"
+            ]
+        )
+
+        # Under a Poisson revocation model, this is the probability
+        # of at least one revocation occurring during the TTL.
+        revocation_during_ttl_probability = (
+            1.0
+            - math.exp(
+                -revocations_per_hour
+                * float(ttl_seconds)
+                / 3600.0
+            )
+        )
+
+        # Stale-cache risk requires both a cache hit and a revocation
+        # occurring before the cached trust information expires.
+        estimated_stale_cache_risk = (
+            cache_hit_probability
+            * revocation_during_ttl_probability
+        )
+
+        for replication in range(replication_count):
+            engine = SimulationEngine(
+                experiment_config,
+                "refined",
+                replication,
+            )
+
+            results = engine.run()
+
+            if not results:
+                continue
+
+            rows.append(
+                {
+                    "cache_ttl_seconds": ttl_seconds,
+                    "architecture": "refined",
+                    "replication": replication,
+                    "configured_cache_hit_probability": (
+                        cache_hit_probability
+                    ),
+                    "observed_cache_hit_rate": sum(
+                        result.trust_cache_hit
+                        for result in results
+                    )
+                    / len(results),
+                    "estimated_stale_cache_risk": (
+                        estimated_stale_cache_risk
+                    ),
+                    "success_rate": sum(
+                        result.success
+                        for result in results
+                    )
+                    / len(results),
+                    "average_latency_ms": sum(
+                        result.latency_ms
+                        for result in results
+                    )
+                    / len(results),
+                }
+            )
+
+    return pd.DataFrame(rows)
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
 
@@ -2430,6 +2542,52 @@ def main() -> None:
     )
 
     print("Connector-capacity sensitivity experiment completed.")
+        # Run the cache lifetime versus staleness experiment.
+    print("\nRunning cache-TTL sensitivity experiment...")
+
+    cache_ttl_results = run_cache_ttl_sensitivity(config)
+
+    # Save one row for every TTL and replication.
+    cache_ttl_results.to_csv(
+        output_directory
+        / "cache_ttl_sensitivity_by_replication.csv",
+        index=False,
+    )
+        # Average the ten replications for each cache lifetime.
+    cache_ttl_summary = (
+        cache_ttl_results.groupby(
+            [
+                "cache_ttl_seconds",
+                "architecture",
+            ],
+            as_index=False,
+        )
+        .agg(
+            configured_cache_hit_probability=(
+                "configured_cache_hit_probability",
+                "mean",
+            ),
+            mean_observed_cache_hit_rate=(
+                "observed_cache_hit_rate",
+                "mean",
+            ),
+            mean_estimated_stale_cache_risk=(
+                "estimated_stale_cache_risk",
+                "mean",
+            ),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
+
+    cache_ttl_summary.to_csv(
+        output_directory
+        / "cache_ttl_sensitivity_summary.csv",
+        index=False,
+    )
+
+    print("Cache-TTL sensitivity experiment completed.")
+
     workload_summary = (
         workload_results.groupby(
             [
