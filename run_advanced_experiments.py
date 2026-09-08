@@ -1829,6 +1829,8 @@ def run_workload_sensitivity(
                                 for result in results
                             )
                             / len(results),
+
+                            
                         }
                     )
 
@@ -1995,6 +1997,7 @@ def run_credential_status_sensitivity(
 
                 if not results:
                     continue
+                
 
                 rows.append(
                     {
@@ -2033,7 +2036,86 @@ def run_credential_status_sensitivity(
                 )
 
     return pd.DataFrame(rows)
+def run_connector_capacity_sensitivity(
+    config: Dict,
+) -> pd.DataFrame:
+    """
+    Test cross-organizational exchange at different connector capacities.
 
+    Every architecture receives the same connector capacity at each
+    experimental level. Architectural capabilities such as connector
+    redundancy remain unchanged.
+    """
+
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    capacities = config["experiments"][
+        "connector_capacities"
+    ]
+
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    rows = []
+
+    for capacity in capacities:
+        # Create a separate configuration for this capacity level.
+        experiment_config = deepcopy(config)
+
+        for architecture in architectures:
+            # Apply equal connector capacity for a controlled comparison.
+            experiment_config[architecture][
+                "connector_capacity"
+            ] = int(capacity)
+
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    experiment_config,
+                    architecture,
+                    replication,
+                )
+
+                # Cross-organizational exchange directly exercises
+                # connector and FHIR processing.
+                results = engine.run_cross_org_exchange()
+
+                if not results:
+                    continue
+                # Measure whether the connector is congested.
+                connector_stats = engine.resources[
+                    "connector"
+                ].stats(engine.duration_s)
+                rows.append(
+                    {
+                        "connector_capacity": capacity,
+                        "architecture": architecture,
+                        "replication": replication,
+                        "total_requests": len(results),
+                        "success_rate": sum(
+                            result.success
+                            for result in results
+                        )
+                        / len(results),
+                        "average_latency_ms": sum(
+                            result.latency_ms
+                            for result in results
+                        )
+                        / len(results),
+                        "connector_utilization": (
+                            connector_stats["utilization"]
+                        ),
+                        "connector_average_wait_ms": (
+                            connector_stats["average_wait_ms"]
+                        ),
+                    }
+                )
+
+    return pd.DataFrame(rows)
 
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
@@ -2239,6 +2321,7 @@ def main() -> None:
                 "mean",
             ),
             mean_latency_ms=("average_latency_ms", "mean"),
+        
             mean_retry_attempts=(
                 "average_retry_attempts",
                 "mean",
@@ -2301,6 +2384,52 @@ def main() -> None:
     )
 
     print("Credential-status sensitivity experiment completed.")
+
+        # Run the controlled connector-capacity experiment.
+    print("\nRunning connector-capacity sensitivity experiment...")
+
+    connector_capacity_results = (
+        run_connector_capacity_sensitivity(config)
+    )
+
+    # Save one row for every capacity, architecture and replication.
+    connector_capacity_results.to_csv(
+        output_directory
+        / "connector_capacity_sensitivity_by_replication.csv",
+        index=False,
+    )
+
+        # Average the replications for each capacity and architecture.
+    connector_capacity_summary = (
+        connector_capacity_results.groupby(
+            [
+                "connector_capacity",
+                "architecture",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+            mean_connector_utilization=(
+                "connector_utilization",
+                "mean",
+            ),
+            mean_connector_wait_ms=(
+                "connector_average_wait_ms",
+                "mean",
+            ),
+        )
+    )
+
+    connector_capacity_summary.to_csv(
+        output_directory
+        / "connector_capacity_sensitivity_summary.csv",
+        index=False,
+    )
+
+    print("Connector-capacity sensitivity experiment completed.")
     workload_summary = (
         workload_results.groupby(
             [
