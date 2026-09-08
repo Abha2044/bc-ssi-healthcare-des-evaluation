@@ -260,6 +260,17 @@
             900,
             3600
             ],
+            "trust_revocation_events_per_hour": [
+                1,
+                5,
+                10
+            ],
+            "session_revalidation_intervals_seconds": [
+                5,
+                30,
+                60,
+                300
+            ],
             "cache_hit_model_intercept": 0.45,
             "cache_hit_model_slope": 0.18,
             "cache_hit_model_cap": 0.9
