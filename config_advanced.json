@@ -273,7 +273,31 @@
             ],
             "cache_hit_model_intercept": 0.45,
             "cache_hit_model_slope": 0.18,
-            "cache_hit_model_cap": 0.9
+            "cache_hit_model_cap": 0.9,
+            "ablation_variants": [
+                "baseline",
+                "trust_cache_only",
+                "fallback_retry_only",
+                "connector_redundancy_only",
+                "session_manager_only",
+                "status_revocation_only",
+                "audit_compliance_only",
+                "policy_capability_only",
+                "fhir_anonymization_only",
+                    "full_refined"
+                ],
+                "ablation_scenarios": [
+                    "emergency_access",
+                    "consent_based_access",
+                    "consent_revocation",
+                    "cross_org_exchange",
+                    "high_volume_ingestion",
+                    "audit_investigation",
+                    "trust_failure",
+                    "lab_ingestion_recovery",
+                    "multi_device_access",
+                    "research_donation"
+                ]
         
     }
 }
