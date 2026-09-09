@@ -858,6 +858,117 @@ def plot_resource_saturation() -> None:
     plt.close(figure)
 
 
+def plot_mixed_workload_stability() -> None:
+    """Plot utilization and saturation under shared mixed workloads."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY
+        / "mixed_workload_resource_summary.csv"
+    )
+    stability = (
+        data.groupby(
+            ["workload_multiplier", "architecture"],
+            as_index=False,
+        )
+        .agg(
+            peak_mean_utilization=(
+                "mean_utilization",
+                "max",
+            ),
+            replication_saturation_rate=(
+                "replication_saturation_rate",
+                "max",
+            ),
+        )
+    )
+
+    multipliers = sorted(
+        stability["workload_multiplier"].unique()
+    )
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    figure, axes = plt.subplots(
+        1,
+        2,
+        figsize=(11, 4.5),
+        constrained_layout=True,
+    )
+
+    for architecture in architectures:
+        architecture_data = (
+            stability[
+                stability["architecture"] == architecture
+            ]
+            .sort_values("workload_multiplier")
+        )
+        axes[0].plot(
+            architecture_data["workload_multiplier"],
+            architecture_data["peak_mean_utilization"],
+            marker="o",
+            linewidth=2,
+            color=ARCHITECTURE_COLORS[architecture],
+            label=ARCHITECTURE_LABELS[architecture],
+        )
+
+    axes[0].axhline(
+        0.95,
+        color="#B91C1C",
+        linestyle="--",
+        linewidth=1.3,
+        label="95% saturation threshold",
+    )
+    axes[0].set_xticks(multipliers)
+    axes[0].set_ylim(0, 1.05)
+    axes[0].set_xlabel("Mixed-workload multiplier")
+    axes[0].set_ylabel("Peak mean resource utilization")
+    axes[0].set_title("Shared-resource utilization")
+    axes[0].legend()
+
+    positions = np.arange(len(multipliers))
+    bar_width = 0.24
+
+    for index, architecture in enumerate(architectures):
+        architecture_data = (
+            stability[
+                stability["architecture"] == architecture
+            ]
+            .set_index("workload_multiplier")
+            .reindex(multipliers)
+        )
+        axes[1].bar(
+            positions + (index - 1) * bar_width,
+            architecture_data[
+                "replication_saturation_rate"
+            ],
+            width=bar_width,
+            color=ARCHITECTURE_COLORS[architecture],
+            label=ARCHITECTURE_LABELS[architecture],
+        )
+
+    axes[1].set_xticks(positions)
+    axes[1].set_xticklabels(multipliers)
+    axes[1].set_ylim(0, 1.05)
+    axes[1].set_xlabel("Mixed-workload multiplier")
+    axes[1].set_ylabel("Fraction of replications saturated")
+    axes[1].set_title("Stability across replications")
+    axes[1].legend()
+
+    figure.savefig(
+        FIGURES_DIRECTORY / "mixed_workload_stability.png",
+        bbox_inches="tight",
+    )
+    figure.savefig(
+        FIGURES_DIRECTORY / "mixed_workload_stability.pdf",
+        bbox_inches="tight",
+    )
+
+    plt.close(figure)
+
+
 def parse_arguments() -> argparse.Namespace:
     """Read result and figure directories from the command line."""
 
@@ -905,6 +1016,7 @@ def main() -> None:
     plot_architecture_comparison()
     plot_capacity_attribution()
     plot_resource_saturation()
+    plot_mixed_workload_stability()
     plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
@@ -922,6 +1034,8 @@ def main() -> None:
     print("Created capacity_attribution.pdf")
     print("Created resource_saturation.png")
     print("Created resource_saturation.pdf")
+    print("Created mixed_workload_stability.png")
+    print("Created mixed_workload_stability.pdf")
     print("Created workload_sensitivity.png")
     print("Created workload_sensitivity.pdf")
     print("Created trust_failure_sensitivity.png")

@@ -1804,6 +1804,152 @@ def run_selected_scenario(
         return engine.run_research_donation()
 
     raise ValueError(f"Unknown scenario: {scenario}")
+
+
+def process_selected_request(
+    engine: SimulationEngine,
+    scenario: str,
+    request_id: int,
+    arrival_time: float,
+) -> RequestResult:
+    """Process one request from a mixed scenario arrival stream."""
+
+    processors = {
+        "emergency_access": engine.run_emergency_request,
+        "consent_based_access": (
+            engine.process_consent_based_access
+        ),
+        "audit_investigation": (
+            engine.process_audit_investigation
+        ),
+        "cross_org_exchange": engine.process_cross_org_exchange,
+        "high_volume_ingestion": (
+            engine.process_high_volume_ingestion
+        ),
+        "consent_revocation": engine.process_consent_revocation,
+        "trust_failure": engine.process_trust_failure,
+        "lab_ingestion_recovery": (
+            engine.process_lab_ingestion_recovery
+        ),
+        "multi_device_access": engine.process_multi_device_access,
+        "research_donation": engine.process_research_donation,
+    }
+
+    try:
+        processor = processors[scenario]
+    except KeyError as error:
+        raise ValueError(
+            f"Unknown mixed-workload scenario: {scenario}"
+        ) from error
+
+    return processor(request_id, arrival_time)
+
+
+def run_mixed_workload_experiment(
+    config: Dict,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Run all scenario streams against shared resource pools."""
+
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+    multipliers = config["experiments"][
+        "workload_multipliers"
+    ]
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+    base_rates = config["simulation"][
+        "arrival_rate_per_second"
+    ]
+
+    result_rows = []
+    resource_rows = []
+
+    for multiplier in multipliers:
+        for architecture in architectures:
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    config,
+                    architecture,
+                    replication,
+                )
+                events = []
+
+                # Generate every arrival stream before processing so all
+                # architectures receive the same mixed workload under CRN.
+                for scenario, base_rate in base_rates.items():
+                    arrivals = engine.generate_arrivals(
+                        float(base_rate) * float(multiplier)
+                    )
+                    events.extend(
+                        (arrival_time, scenario, request_id)
+                        for request_id, arrival_time in enumerate(
+                            arrivals,
+                            start=1,
+                        )
+                    )
+
+                events.sort(key=lambda event: (event[0], event[1]))
+                results = []
+
+                for arrival_time, scenario, request_id in events:
+                    result = process_selected_request(
+                        engine,
+                        scenario,
+                        request_id,
+                        arrival_time,
+                    )
+
+                    if arrival_time >= engine.warmup_s:
+                        results.append(result)
+
+                if not results:
+                    continue
+
+                result_frame = pd.DataFrame(
+                    asdict(result) for result in results
+                )
+
+                groups = list(result_frame.groupby("scenario"))
+                groups.append(("all_scenarios", result_frame))
+
+                for scenario, group in groups:
+                    result_rows.append(
+                        {
+                            "workload_multiplier": multiplier,
+                            "architecture": architecture,
+                            "scenario": scenario,
+                            "replication": replication,
+                            "total_requests": len(group),
+                            "success_rate": group["success"].mean(),
+                            "average_latency_ms": group[
+                                "latency_ms"
+                            ].mean(),
+                            "median_latency_ms": group[
+                                "latency_ms"
+                            ].median(),
+                        }
+                    )
+
+                engine_resource_rows = engine.resource_statistics(
+                    "mixed_workload"
+                )
+                any_saturation = max(
+                    row["saturated"]
+                    for row in engine_resource_rows
+                )
+
+                for row in engine_resource_rows:
+                    row["workload_multiplier"] = multiplier
+                    row["any_resource_saturated"] = any_saturation
+                    resource_rows.append(row)
+
+    return pd.DataFrame(result_rows), pd.DataFrame(resource_rows)
+
+
 def run_workload_sensitivity(
     config: Dict,
 ) -> pd.DataFrame:
@@ -2618,6 +2764,81 @@ def main() -> None:
         index=False,
     )
     print("Workload sensitivity experiment completed.")
+
+    print("\nRunning mixed-workload experiment...")
+    (
+        mixed_workload_results,
+        mixed_workload_resources,
+    ) = run_mixed_workload_experiment(config)
+
+    mixed_workload_results.to_csv(
+        output_directory
+        / "mixed_workload_by_replication.csv",
+        index=False,
+    )
+    mixed_workload_resources.to_csv(
+        output_directory
+        / "mixed_workload_resource_by_replication.csv",
+        index=False,
+    )
+
+    mixed_workload_summary = (
+        mixed_workload_results.groupby(
+            [
+                "workload_multiplier",
+                "architecture",
+                "scenario",
+            ],
+            as_index=False,
+        )
+        .agg(
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+            mean_median_latency_ms=(
+                "median_latency_ms",
+                "mean",
+            ),
+        )
+    )
+    mixed_workload_summary.to_csv(
+        output_directory / "mixed_workload_summary.csv",
+        index=False,
+    )
+
+    mixed_workload_resource_summary = (
+        mixed_workload_resources.groupby(
+            [
+                "workload_multiplier",
+                "architecture",
+                "resource",
+            ],
+            as_index=False,
+        )
+        .agg(
+            capacity=("capacity", "first"),
+            mean_calls=("calls", "mean"),
+            mean_utilization=("utilization", "mean"),
+            maximum_utilization=("utilization", "max"),
+            mean_wait_ms=("average_wait_ms", "mean"),
+            maximum_wait_ms=("maximum_wait_ms", "max"),
+            saturation_rate=("saturated", "mean"),
+            replication_saturation_rate=(
+                "any_resource_saturated",
+                "mean",
+            ),
+            mean_calls_delayed_beyond_horizon=(
+                "calls_delayed_beyond_horizon",
+                "mean",
+            ),
+        )
+    )
+    mixed_workload_resource_summary.to_csv(
+        output_directory
+        / "mixed_workload_resource_summary.csv",
+        index=False,
+    )
+    print("Mixed-workload experiment completed.")
 
         # Run the controlled trust-service failure experiment.
     print("\nRunning trust-failure sensitivity experiment...")
