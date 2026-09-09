@@ -743,6 +743,121 @@ def plot_capacity_attribution() -> None:
     plt.close(figure)
 
 
+def plot_resource_saturation() -> None:
+    """Plot mean utilization and identify saturated resources."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY / "resource_saturation_summary.csv"
+    )
+
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+    scenarios = sorted(data["scenario"].unique())
+    resources = (
+        data.groupby("resource")["mean_utilization"]
+        .max()
+        .sort_values(ascending=False)
+        .index.tolist()
+    )
+
+    figure, axes = plt.subplots(
+        1,
+        3,
+        figsize=(19, 8),
+        sharey=True,
+        constrained_layout=True,
+    )
+
+    image = None
+
+    for index, architecture in enumerate(architectures):
+        architecture_data = data[
+            data["architecture"] == architecture
+        ]
+        utilization = (
+            architecture_data.pivot(
+                index="resource",
+                columns="scenario",
+                values="mean_utilization",
+            )
+            .reindex(index=resources, columns=scenarios)
+        )
+        saturation = (
+            architecture_data.pivot(
+                index="resource",
+                columns="scenario",
+                values="saturation_rate",
+            )
+            .reindex(index=resources, columns=scenarios)
+            .fillna(0.0)
+        )
+
+        image = axes[index].imshow(
+            utilization.to_numpy(dtype=float),
+            aspect="auto",
+            vmin=0.0,
+            vmax=1.0,
+            cmap="YlOrRd",
+        )
+        axes[index].set_title(
+            ARCHITECTURE_LABELS[architecture]
+        )
+        axes[index].set_xticks(np.arange(len(scenarios)))
+        axes[index].set_xticklabels(
+            [scenario_label(value) for value in scenarios],
+            rotation=55,
+            ha="right",
+            fontsize=8,
+        )
+        axes[index].set_yticks(np.arange(len(resources)))
+
+        if index == 0:
+            axes[index].set_yticklabels(
+                [scenario_label(value) for value in resources]
+            )
+        else:
+            axes[index].tick_params(labelleft=False)
+
+        for row_index in range(len(resources)):
+            for column_index in range(len(scenarios)):
+                if saturation.iloc[row_index, column_index] > 0:
+                    axes[index].text(
+                        column_index,
+                        row_index,
+                        "S",
+                        ha="center",
+                        va="center",
+                        color="black",
+                        fontweight="bold",
+                    )
+
+    colorbar = figure.colorbar(
+        image,
+        ax=axes,
+        shrink=0.78,
+        pad=0.02,
+    )
+    colorbar.set_label("Mean resource utilization")
+    figure.suptitle(
+        "Resource utilization by architecture and scenario\n"
+        "S marks combinations saturated in at least one replication"
+    )
+
+    figure.savefig(
+        FIGURES_DIRECTORY / "resource_saturation.png",
+        bbox_inches="tight",
+    )
+    figure.savefig(
+        FIGURES_DIRECTORY / "resource_saturation.pdf",
+        bbox_inches="tight",
+    )
+
+    plt.close(figure)
+
+
 def parse_arguments() -> argparse.Namespace:
     """Read result and figure directories from the command line."""
 
@@ -789,6 +904,7 @@ def main() -> None:
 
     plot_architecture_comparison()
     plot_capacity_attribution()
+    plot_resource_saturation()
     plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
@@ -804,6 +920,8 @@ def main() -> None:
     )
     print("Created capacity_attribution.png")
     print("Created capacity_attribution.pdf")
+    print("Created resource_saturation.png")
+    print("Created resource_saturation.pdf")
     print("Created workload_sensitivity.png")
     print("Created workload_sensitivity.pdf")
     print("Created trust_failure_sensitivity.png")

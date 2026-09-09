@@ -75,6 +75,8 @@ class ResourcePool:
         self.wait_time = 0.0
         self.calls = 0
         self.max_wait = 0.0
+        self.service_intervals: List[Tuple[float, float]] = []
+        self.wait_intervals: List[Tuple[float, float]] = []
 
     def process(
         self,
@@ -93,6 +95,8 @@ class ResourcePool:
         finish = start + max(0.0, service_time_s)
 
         self.next_available[server_index] = finish
+        self.service_intervals.append((start, finish))
+        self.wait_intervals.append((now, start))
 
         if start >= self.warmup_s:
             self.busy_time += max(0.0, service_time_s)
@@ -106,22 +110,50 @@ class ResourcePool:
         """Return utilization and queue statistics."""
 
         measured_duration = max(horizon_s - self.warmup_s, 1e-9)
+        measured_busy_time = sum(
+            max(
+                0.0,
+                min(finish, horizon_s)
+                - max(start, self.warmup_s),
+            )
+            for start, finish in self.service_intervals
+        )
+        measured_waits = [
+            max(0.0, min(start, horizon_s) - arrival)
+            for arrival, start in self.wait_intervals
+            if self.warmup_s <= arrival < horizon_s
+        ]
+        measured_calls = len(measured_waits)
+        delayed_beyond_horizon = sum(
+            start >= horizon_s
+            for arrival, start in self.wait_intervals
+            if self.warmup_s <= arrival < horizon_s
+        )
 
-        utilization = self.busy_time / (
+        utilization = measured_busy_time / (
             measured_duration * self.capacity
         )
 
         average_wait_ms = (
-            self.wait_time / self.calls * MS
-            if self.calls
+            sum(measured_waits) / measured_calls * MS
+            if measured_calls
             else 0.0
         )
 
         return {
-            "calls": self.calls,
+            "capacity": self.capacity,
+            "calls": measured_calls,
             "utilization": utilization,
             "average_wait_ms": average_wait_ms,
-            "maximum_wait_ms": self.max_wait * MS,
+            "maximum_wait_ms": (
+                max(measured_waits) * MS
+                if measured_waits
+                else 0.0
+            ),
+            "saturated": int(utilization >= 0.95),
+            "calls_delayed_beyond_horizon": (
+                delayed_beyond_horizon
+            ),
         }
 
 
@@ -220,6 +252,28 @@ class SimulationEngine:
                 warmup_s=self.warmup_s,
             ),
         }
+
+    def resource_statistics(
+        self,
+        scenario: str,
+    ) -> List[Dict[str, float | int | str]]:
+        """Return one observation-window row for every resource."""
+
+        rows = []
+
+        for resource_name, resource in self.resources.items():
+            statistics = resource.stats(self.duration_s)
+            rows.append(
+                {
+                    "architecture": self.architecture,
+                    "scenario": scenario,
+                    "replication": self.replication,
+                    "resource": resource_name,
+                    **statistics,
+                }
+            )
+
+        return rows
 
     def service_time_s(
         self,
@@ -2373,6 +2427,7 @@ def main() -> None:
     )
 
     all_results = []
+    all_resource_statistics = []
 
     for architecture in [
         "baseline",
@@ -2448,6 +2503,9 @@ def main() -> None:
                         f"Unknown scenario: {scenario}"
                     )
                 all_results.extend(replication_results)
+                all_resource_statistics.extend(
+                    engine.resource_statistics(scenario)
+                )
 
                 successful = sum(
                     result.success
@@ -2516,6 +2574,41 @@ def main() -> None:
         output_directory / "baseline_refined_by_replication.csv",
         index=False,
     )
+
+    resource_statistics = pd.DataFrame(
+        all_resource_statistics
+    )
+    resource_statistics.to_csv(
+        output_directory
+        / "resource_statistics_by_replication.csv",
+        index=False,
+    )
+
+    resource_saturation_summary = (
+        resource_statistics.groupby(
+            ["architecture", "scenario", "resource"],
+            as_index=False,
+        )
+        .agg(
+            capacity=("capacity", "first"),
+            mean_calls=("calls", "mean"),
+            mean_utilization=("utilization", "mean"),
+            maximum_utilization=("utilization", "max"),
+            mean_wait_ms=("average_wait_ms", "mean"),
+            maximum_wait_ms=("maximum_wait_ms", "max"),
+            saturation_rate=("saturated", "mean"),
+            mean_calls_delayed_beyond_horizon=(
+                "calls_delayed_beyond_horizon",
+                "mean",
+            ),
+        )
+    )
+    resource_saturation_summary.to_csv(
+        output_directory
+        / "resource_saturation_summary.csv",
+        index=False,
+    )
+
     print("\nRunning workload sensitivity experiment...")
     
     workload_results = run_workload_sensitivity(config)
@@ -2828,6 +2921,8 @@ def main() -> None:
     
     print("\nScenario comparison")
     print(overall.to_string(index=False))
+    print("\nCreated resource_statistics_by_replication.csv")
+    print("Created resource_saturation_summary.csv")
     print("\nResults saved in the results directory.")
 
 
