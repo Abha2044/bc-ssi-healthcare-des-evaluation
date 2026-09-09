@@ -969,6 +969,93 @@ def plot_mixed_workload_stability() -> None:
     plt.close(figure)
 
 
+def plot_atam_gap_tracking() -> None:
+    """Plot runtime ATAM-gap encounter rates by scenario."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY / "gap_tracking_summary.csv"
+    )
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+    scenarios = sorted(data["scenario"].unique())
+    gaps = [f"G{index}" for index in range(1, 14)]
+
+    figure, axes = plt.subplots(
+        1,
+        3,
+        figsize=(19, 7),
+        sharey=True,
+        constrained_layout=True,
+    )
+    image = None
+
+    for index, architecture in enumerate(architectures):
+        architecture_data = data[
+            data["architecture"] == architecture
+        ]
+        matrix = (
+            architecture_data.pivot(
+                index="scenario",
+                columns="gap",
+                values="mean_gap_encounter_rate",
+            )
+            .reindex(index=scenarios, columns=gaps)
+            .fillna(0.0)
+        )
+
+        image = axes[index].imshow(
+            matrix.to_numpy(dtype=float),
+            aspect="auto",
+            vmin=0.0,
+            vmax=1.0,
+            cmap="Blues",
+        )
+        axes[index].set_title(
+            ARCHITECTURE_LABELS[architecture]
+        )
+        axes[index].set_xticks(np.arange(len(gaps)))
+        axes[index].set_xticklabels(
+            ["G4*" if gap == "G4" else gap for gap in gaps],
+            rotation=45,
+            ha="right",
+        )
+        axes[index].set_yticks(np.arange(len(scenarios)))
+
+        if index == 0:
+            axes[index].set_yticklabels(
+                [scenario_label(value) for value in scenarios]
+            )
+        else:
+            axes[index].tick_params(labelleft=False)
+
+    colorbar = figure.colorbar(
+        image,
+        ax=axes,
+        shrink=0.78,
+        pad=0.02,
+    )
+    colorbar.set_label("Mean request gap-encounter rate")
+    figure.suptitle(
+        "Runtime ATAM-gap tracking by architecture and scenario\n"
+        "G4* is only partially modelled and is not counted as "
+        "runtime evidence"
+    )
+
+    figure.savefig(
+        FIGURES_DIRECTORY / "atam_gap_tracking.png",
+        bbox_inches="tight",
+    )
+    figure.savefig(
+        FIGURES_DIRECTORY / "atam_gap_tracking.pdf",
+        bbox_inches="tight",
+    )
+
+    plt.close(figure)
+
+
 def parse_arguments() -> argparse.Namespace:
     """Read result and figure directories from the command line."""
 
@@ -1017,6 +1104,7 @@ def main() -> None:
     plot_capacity_attribution()
     plot_resource_saturation()
     plot_mixed_workload_stability()
+    plot_atam_gap_tracking()
     plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
@@ -1036,6 +1124,8 @@ def main() -> None:
     print("Created resource_saturation.pdf")
     print("Created mixed_workload_stability.png")
     print("Created mixed_workload_stability.pdf")
+    print("Created atam_gap_tracking.png")
+    print("Created atam_gap_tracking.pdf")
     print("Created workload_sensitivity.png")
     print("Created workload_sensitivity.pdf")
     print("Created trust_failure_sensitivity.png")

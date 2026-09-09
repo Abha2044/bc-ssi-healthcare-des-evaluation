@@ -7,9 +7,9 @@ import math
 import random
 from copy import deepcopy 
 import pandas as pd
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 
 
@@ -35,6 +35,7 @@ class RequestContext:
     anonymization: int = 0
     revocation_propagation_ms: float = 0.0
     unauthorized_continuation_ms: float = 0.0
+    gaps: Set[str] = field(default_factory=set)
 
 @dataclass
 class RequestResult:
@@ -63,6 +64,7 @@ class RequestResult:
     revocation_propagation_ms: float = 0.0
     unauthorized_continuation_ms: float = 0.0
     anonymization_applied: int = 0
+    gaps_encountered: str = ""
 class ResourcePool:
     """A simple multi-server queue used by the simulation."""
 
@@ -274,6 +276,105 @@ class SimulationEngine:
             )
 
         return rows
+
+    def create_request_context(
+        self,
+        scenario: str,
+    ) -> RequestContext:
+        """Create a request context and record open ATAM gaps."""
+
+        scenario_gaps = {
+            "emergency_access": {"G2", "G3", "G5", "G6", "G9"},
+            "consent_based_access": {
+                "G2", "G3", "G5", "G6", "G9", "G10", "G13",
+            },
+            "lab_ingestion_recovery": {
+                "G1", "G5", "G6", "G7", "G9", "G13",
+            },
+            "cross_org_exchange": {
+                "G2", "G3", "G5", "G6", "G7", "G8", "G9", "G13",
+            },
+            "research_donation": {
+                "G1", "G2", "G5", "G6", "G9", "G11",
+            },
+            "high_volume_ingestion": {
+                "G1", "G5", "G6", "G7", "G9", "G13",
+            },
+            "multi_device_access": {
+                "G6", "G9", "G10", "G12", "G13",
+            },
+            "audit_investigation": {
+                "G2", "G3", "G5", "G6", "G9",
+            },
+            "consent_revocation": {
+                "G2", "G5", "G6", "G9", "G10", "G13",
+            },
+            "trust_failure": {"G5", "G6", "G9", "G13"},
+        }
+        gap_is_open = {
+            "G1": not self.parameters.get(
+                "fhir_complete_in_integration", False
+            ),
+            "G2": not self.parameters.get(
+                "obligation_handling_enabled", False
+            ),
+            "G3": not self.parameters.get(
+                "data_minimization_enabled", False
+            ),
+            "G5": not self.parameters.get(
+                "compliance_required", False
+            ),
+            "G6": not self.parameters.get(
+                "audit_tagging_enabled", False
+            ),
+            "G7": not self.parameters.get(
+                "connector_redundancy_enabled", False
+            ),
+            "G8": not self.parameters.get(
+                "connector_full_in_access", False
+            ),
+            "G9": not (
+                self.parameters.get("trust_cache_enabled", False)
+                and self.parameters.get(
+                    "fallback_trust_enabled", False
+                )
+            ),
+            "G10": not self.parameters.get(
+                "session_manager_enabled", False
+            ),
+            "G11": not self.parameters.get(
+                "anonymization_enabled", False
+            ),
+            "G12": not self.parameters.get(
+                "cross_device_sync_enabled", False
+            ),
+            "G13": not (
+                self.parameters.get("circuit_breaker_enabled", False)
+                and int(
+                    self.parameters.get("max_retry_attempts", 1)
+                ) > 1
+            ),
+        }
+
+        context = RequestContext()
+        context.gaps.update(
+            gap
+            for gap in scenario_gaps.get(scenario, set())
+            if gap_is_open[gap]
+        )
+
+        return context
+
+    @staticmethod
+    def format_gaps(context: RequestContext) -> str:
+        """Return gap identifiers in numeric order."""
+
+        return "|".join(
+            sorted(
+                context.gaps,
+                key=lambda gap: int(gap[1:]),
+            )
+        )
 
     def service_time_s(
         self,
@@ -715,7 +816,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process one emergency-access request."""
 
-        context = RequestContext()
+        context = self.create_request_context("emergency_access")
         now = arrival_time
 
         now = self.resource_step(
@@ -792,6 +893,7 @@ class SimulationEngine:
             circuit_opened=context.circuit_opened,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             
         )
 
@@ -802,7 +904,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Reconstruct an audit trail for an investigation."""
 
-        context = RequestContext()
+        context = self.create_request_context("audit_investigation")
         now = arrival_time
 
         now = self.resource_step(
@@ -843,6 +945,7 @@ class SimulationEngine:
             compliance_recorded=0,
             audit_logged=0,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             retry_attempts=0,
             fallback_used=0,
             circuit_opened=0,
@@ -855,7 +958,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Exchange a verified FHIR resource across organizations."""
 
-        context = RequestContext()
+        context = self.create_request_context("cross_org_exchange")
         now = arrival_time
 
         now = self.resource_step(
@@ -918,6 +1021,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
         )
     def process_high_volume_ingestion(
         self,
@@ -926,7 +1030,9 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process one high-volume clinical-data ingestion request."""
 
-        context = RequestContext()
+        context = self.create_request_context(
+            "high_volume_ingestion"
+        )
         now = arrival_time
 
         now = self.resource_step(
@@ -1001,6 +1107,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             revocation_propagation_ms=(context.revocation_propagation_ms),
             unauthorized_continuation_ms=(context.unauthorized_continuation_ms),
         )
@@ -1012,7 +1119,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process consent revocation for an active access session."""
 
-        context = RequestContext()
+        context = self.create_request_context("consent_revocation")
         now = arrival_time
 
         now = self.resource_step(
@@ -1088,6 +1195,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             revocation_propagation_ms=(
                 context.revocation_propagation_ms
             ),
@@ -1103,7 +1211,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process consented health-data donation for research."""
 
-        context = RequestContext()
+        context = self.create_request_context("research_donation")
         now = arrival_time
 
         now = self.resource_step(
@@ -1182,6 +1290,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             anonymization_applied=context.anonymization,
         )
     def process_multi_device_access(
@@ -1191,7 +1300,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process one healthcare episode across multiple devices."""
 
-        context = RequestContext()
+        context = self.create_request_context("multi_device_access")
         now = arrival_time
 
         device_count = max(
@@ -1288,6 +1397,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
         )
     def process_lab_ingestion_recovery(
         self,
@@ -1296,7 +1406,9 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process laboratory-data ingestion during disruption."""
 
-        context = RequestContext()
+        context = self.create_request_context(
+            "lab_ingestion_recovery"
+        )
         now = arrival_time
 
         now = self.resource_step(
@@ -1363,6 +1475,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
         )
     def process_consent_based_access(
         self,
@@ -1371,7 +1484,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process healthcare-data access under active patient consent."""
 
-        context = RequestContext()
+        context = self.create_request_context("consent_based_access")
         now = arrival_time
 
         now = self.resource_step(
@@ -1462,6 +1575,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
             revocation_propagation_ms=(
                 context.revocation_propagation_ms
             ),
@@ -1477,7 +1591,7 @@ class SimulationEngine:
     ) -> RequestResult:
         """Process access while the trust service is degraded."""
 
-        context = RequestContext()
+        context = self.create_request_context("trust_failure")
         now = arrival_time
 
         now = self.resource_step(
@@ -1545,6 +1659,7 @@ class SimulationEngine:
             compliance_recorded=context.compliance,
             audit_logged=context.audit_logs,
             audit_tagged=context.audit_tags,
+            gaps_encountered=self.format_gaps(context),
         )
 
     def run_audit_investigation(
@@ -1948,6 +2063,51 @@ def run_mixed_workload_experiment(
                     resource_rows.append(row)
 
     return pd.DataFrame(result_rows), pd.DataFrame(resource_rows)
+
+
+def build_gap_tracking_by_replication(
+    detail: pd.DataFrame,
+) -> pd.DataFrame:
+    """Count requests affected by each ATAM gap per replication."""
+
+    rows = []
+    gap_identifiers = [f"G{index}" for index in range(1, 14)]
+    grouped = detail.groupby(
+        ["architecture", "scenario", "replication"],
+        sort=True,
+    )
+
+    for (
+        architecture,
+        scenario,
+        replication,
+    ), group in grouped:
+        request_gaps = group["gaps_encountered"].fillna("").map(
+            lambda value: set(value.split("|")) if value else set()
+        )
+
+        for gap in gap_identifiers:
+            affected_requests = int(
+                request_gaps.map(lambda gaps: gap in gaps).sum()
+            )
+            rows.append(
+                {
+                    "architecture": architecture,
+                    "scenario": scenario,
+                    "replication": replication,
+                    "gap": gap,
+                    "runtime_model_status": (
+                        "partial" if gap == "G4" else "modelled"
+                    ),
+                    "total_requests": len(group),
+                    "affected_requests": affected_requests,
+                    "gap_encounter_rate": (
+                        affected_requests / len(group)
+                    ),
+                }
+            )
+
+    return pd.DataFrame(rows)
 
 
 def run_workload_sensitivity(
@@ -2721,6 +2881,42 @@ def main() -> None:
         index=False,
     )
 
+    gap_tracking_by_replication = (
+        build_gap_tracking_by_replication(detail)
+    )
+    gap_tracking_by_replication.to_csv(
+        output_directory
+        / "gap_tracking_by_replication.csv",
+        index=False,
+    )
+    gap_tracking_summary = (
+        gap_tracking_by_replication.groupby(
+            [
+                "architecture",
+                "scenario",
+                "gap",
+                "runtime_model_status",
+            ],
+            as_index=False,
+        )
+        .agg(
+            replications=("replication", "count"),
+            mean_total_requests=("total_requests", "mean"),
+            mean_affected_requests=(
+                "affected_requests",
+                "mean",
+            ),
+            mean_gap_encounter_rate=(
+                "gap_encounter_rate",
+                "mean",
+            ),
+        )
+    )
+    gap_tracking_summary.to_csv(
+        output_directory / "gap_tracking_summary.csv",
+        index=False,
+    )
+
     resource_statistics = pd.DataFrame(
         all_resource_statistics
     )
@@ -3144,6 +3340,8 @@ def main() -> None:
     print(overall.to_string(index=False))
     print("\nCreated resource_statistics_by_replication.csv")
     print("Created resource_saturation_summary.csv")
+    print("Created gap_tracking_by_replication.csv")
+    print("Created gap_tracking_summary.csv")
     print("\nResults saved in the results directory.")
 
 
