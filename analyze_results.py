@@ -341,7 +341,10 @@ if not detail_input_path.exists():
             f"{detail_input_path}"
         )
 
-detail = pd.read_csv(detail_input_path)
+detail = pd.read_csv(
+        detail_input_path,
+        low_memory=False,
+    )
 
 latency_percentiles = build_latency_percentiles(
         detail

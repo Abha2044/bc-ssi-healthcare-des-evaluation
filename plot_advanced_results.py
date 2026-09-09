@@ -231,21 +231,22 @@ def plot_workload_sensitivity() -> None:
 
     axes[1].set_title("Latency under increasing workload")
     axes[1].set_xlabel("Workload multiplier")
-    axes[1].set_ylabel("Mean latency (ms, logarithmic scale)")
+    axes[1].set_ylabel(
+        "Mean latency (ms, logarithmic scale)"
+    )
     axes[1].set_yscale("log")
 
     figure.savefig(
-        FIGURES_DIRECTORY
-        / "workload_sensitivity.png",
+        FIGURES_DIRECTORY / "workload_sensitivity.png",
         bbox_inches="tight",
     )
     figure.savefig(
-        FIGURES_DIRECTORY
-        / "workload_sensitivity.pdf",
+        FIGURES_DIRECTORY / "workload_sensitivity.pdf",
         bbox_inches="tight",
     )
 
     plt.close(figure)
+
 
 def plot_trust_failure_sensitivity() -> None:
     """Plot resilience as trust-service failures increase."""
@@ -656,9 +657,10 @@ def main() -> None:
     configure_plot_style()
 
     plot_architecture_comparison()
-
+    plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
+    plot_session_revalidation_sensitivity()
     plot_credential_status_sensitivity()
     plot_connector_capacity_sensitivity()
 
