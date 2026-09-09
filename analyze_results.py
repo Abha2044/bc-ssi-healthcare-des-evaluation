@@ -10,7 +10,8 @@ from scipy import stats
 
 
 ROOT = Path(__file__).resolve().parent
-ROOT = Path(__file__).resolve().parent
+
+
 def confidence_interval(
     values: pd.Series,
     confidence: float = 0.95,
@@ -292,6 +293,220 @@ def build_latency_percentile_summary(
         rows.append(row)
 
     return pd.DataFrame(rows)
+
+
+def build_capacity_attribution_summary(
+    results: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Separate baseline-to-refined gains into capacity and architecture.
+
+    Each calculation is paired by replication. For latency, a reduction
+    is an improvement; for success rate, an increase is an improvement.
+    Percentage shares are calculated from the mean contributions rather
+    than by averaging unstable replication-level ratios.
+    """
+
+    required_architectures = {
+        "baseline",
+        "capacity_matched",
+        "refined",
+    }
+    available_architectures = set(results["architecture"])
+
+    if not required_architectures.issubset(
+        available_architectures
+    ):
+        missing = sorted(
+            required_architectures - available_architectures
+        )
+        raise ValueError(
+            "Capacity attribution requires all three architectures. "
+            f"Missing: {', '.join(missing)}"
+        )
+
+    rows = []
+
+    for scenario in sorted(results["scenario"].unique()):
+        scenario_results = results[
+            results["scenario"] == scenario
+        ]
+
+        latency = scenario_results.pivot(
+            index="replication",
+            columns="architecture",
+            values="average_latency_ms",
+        )
+        success = scenario_results.pivot(
+            index="replication",
+            columns="architecture",
+            values="success_rate",
+        )
+
+        latency = latency.dropna(
+            subset=sorted(required_architectures)
+        )
+        success = success.dropna(
+            subset=sorted(required_architectures)
+        )
+
+        if not latency.index.equals(success.index):
+            raise ValueError(
+                "Latency and success replications do not match for "
+                f"{scenario}."
+            )
+
+        latency_from_capacity = (
+            latency["baseline"]
+            - latency["capacity_matched"]
+        )
+        latency_from_architecture = (
+            latency["capacity_matched"]
+            - latency["refined"]
+        )
+        latency_total = (
+            latency["baseline"] - latency["refined"]
+        )
+
+        success_from_capacity = (
+            success["capacity_matched"]
+            - success["baseline"]
+        )
+        success_from_architecture = (
+            success["refined"]
+            - success["capacity_matched"]
+        )
+        success_total = (
+            success["refined"] - success["baseline"]
+        )
+
+        (
+            latency_total_mean,
+            _,
+            latency_total_low,
+            latency_total_high,
+        ) = confidence_interval(latency_total)
+        (
+            latency_capacity_mean,
+            _,
+            latency_capacity_low,
+            latency_capacity_high,
+        ) = confidence_interval(latency_from_capacity)
+        (
+            latency_architecture_mean,
+            _,
+            latency_architecture_low,
+            latency_architecture_high,
+        ) = confidence_interval(latency_from_architecture)
+
+        (
+            success_total_mean,
+            _,
+            success_total_low,
+            success_total_high,
+        ) = confidence_interval(success_total)
+        (
+            success_capacity_mean,
+            _,
+            success_capacity_low,
+            success_capacity_high,
+        ) = confidence_interval(success_from_capacity)
+        (
+            success_architecture_mean,
+            _,
+            success_architecture_low,
+            success_architecture_high,
+        ) = confidence_interval(success_from_architecture)
+
+        if abs(latency_total_mean) > 1e-12:
+            latency_capacity_percent = (
+                100.0
+                * latency_capacity_mean
+                / latency_total_mean
+            )
+            latency_architecture_percent = (
+                100.0
+                * latency_architecture_mean
+                / latency_total_mean
+            )
+        else:
+            latency_capacity_percent = float("nan")
+            latency_architecture_percent = float("nan")
+
+        rows.append(
+            {
+                "scenario": scenario,
+                "replications": len(latency),
+                "baseline_mean_latency_ms": latency[
+                    "baseline"
+                ].mean(),
+                "capacity_matched_mean_latency_ms": latency[
+                    "capacity_matched"
+                ].mean(),
+                "refined_mean_latency_ms": latency[
+                    "refined"
+                ].mean(),
+                "latency_total_improvement_ms": (
+                    latency_total_mean
+                ),
+                "latency_total_ci95_low_ms": latency_total_low,
+                "latency_total_ci95_high_ms": latency_total_high,
+                "latency_from_capacity_ms": latency_capacity_mean,
+                "latency_from_capacity_ci95_low_ms": (
+                    latency_capacity_low
+                ),
+                "latency_from_capacity_ci95_high_ms": (
+                    latency_capacity_high
+                ),
+                "latency_from_architecture_ms": (
+                    latency_architecture_mean
+                ),
+                "latency_from_architecture_ci95_low_ms": (
+                    latency_architecture_low
+                ),
+                "latency_from_architecture_ci95_high_ms": (
+                    latency_architecture_high
+                ),
+                "latency_percent_from_capacity": (
+                    latency_capacity_percent
+                ),
+                "latency_percent_from_architecture": (
+                    latency_architecture_percent
+                ),
+                "baseline_mean_success_rate": success[
+                    "baseline"
+                ].mean(),
+                "capacity_matched_mean_success_rate": success[
+                    "capacity_matched"
+                ].mean(),
+                "refined_mean_success_rate": success[
+                    "refined"
+                ].mean(),
+                "success_total_improvement": success_total_mean,
+                "success_total_ci95_low": success_total_low,
+                "success_total_ci95_high": success_total_high,
+                "success_from_capacity": success_capacity_mean,
+                "success_from_capacity_ci95_low": (
+                    success_capacity_low
+                ),
+                "success_from_capacity_ci95_high": (
+                    success_capacity_high
+                ),
+                "success_from_architecture": (
+                    success_architecture_mean
+                ),
+                "success_from_architecture_ci95_low": (
+                    success_architecture_low
+                ),
+                "success_from_architecture_ci95_high": (
+                    success_architecture_high
+                ),
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+
 def parse_arguments() -> argparse.Namespace:
     """Read the result directory from the command line."""
 
@@ -314,83 +529,94 @@ def parse_arguments() -> argparse.Namespace:
 def main() -> None:
     """Create statistical summaries from simulation replications."""
 
-arguments = parse_arguments()
+    arguments = parse_arguments()
 
-results_directory = (
+    results_directory = (
         ROOT / arguments.results_directory
     )
-input_path = (
+    input_path = (
         results_directory
         / "baseline_refined_by_replication.csv"
     )
-detail_input_path = (
+    detail_input_path = (
         results_directory
         / "baseline_refined_detail.csv"
     )
 
-if not input_path.exists():
+    if not input_path.exists():
         raise FileNotFoundError(
             f"Simulation result file not found: {input_path}"
         )
 
-results = pd.read_csv(input_path)
+    results = pd.read_csv(input_path)
 
-if not detail_input_path.exists():
+    if not detail_input_path.exists():
         raise FileNotFoundError(
             f"Detailed result file not found: "
             f"{detail_input_path}"
         )
 
-detail = pd.read_csv(
+    detail = pd.read_csv(
         detail_input_path,
         low_memory=False,
     )
 
-latency_percentiles = build_latency_percentiles(
+    latency_percentiles = build_latency_percentiles(
         detail
     )
-latency_percentile_summary = (
+    latency_percentile_summary = (
         build_latency_percentile_summary(
             latency_percentiles
         )
     )
-confidence_summary = (
+    confidence_summary = (
         build_confidence_interval_summary(results)
     )
-paired_summary = build_paired_comparison_summary(results)
-confidence_summary.to_csv(
+    paired_summary = build_paired_comparison_summary(results)
+    attribution_summary = build_capacity_attribution_summary(
+        results
+    )
+
+    confidence_summary.to_csv(
         results_directory
         / "statistical_confidence_intervals.csv",
         index=False,
     )
 
-paired_summary.to_csv(
+    paired_summary.to_csv(
         results_directory
         / "statistical_paired_comparisons.csv",
         index=False,
     )
 
-latency_percentiles.to_csv(
+    latency_percentiles.to_csv(
         results_directory
         / "latency_percentiles_by_replication.csv",
         index=False,
     )
-latency_percentile_summary.to_csv(
+    latency_percentile_summary.to_csv(
         results_directory
         / "latency_percentiles_summary.csv",
         index=False,
     )
+    attribution_summary.to_csv(
+        results_directory
+        / "capacity_attribution_summary.csv",
+        index=False,
+    )
 
-print("Statistical analysis completed.")
-print(
+    print("Statistical analysis completed.")
+    print(
         "Created statistical_confidence_intervals.csv"
     )
-print(
+    print(
         "Created statistical_paired_comparisons.csv"
     )
-print(
+    print(
         "Created latency percentile result files."
     )
+    print("Created capacity_attribution_summary.csv")
+
 
 if __name__ == "__main__":
     main()

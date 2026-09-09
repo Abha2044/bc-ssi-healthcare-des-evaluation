@@ -612,6 +612,137 @@ def plot_connector_capacity_sensitivity() -> None:
 
     plt.close(figure)
 
+
+def plot_capacity_attribution() -> None:
+    """Plot how capacity and architecture contribute to improvement."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY / "capacity_attribution_summary.csv"
+    )
+    data = data.sort_values(
+        "latency_percent_from_architecture"
+    ).reset_index(drop=True)
+
+    positions = np.arange(len(data))
+    capacity_latency = data[
+        "latency_percent_from_capacity"
+    ].clip(lower=0.0)
+    architecture_latency = data[
+        "latency_percent_from_architecture"
+    ].clip(lower=0.0)
+
+    figure, axes = plt.subplots(
+        1,
+        2,
+        figsize=(14, 7),
+        constrained_layout=True,
+    )
+
+    axes[0].barh(
+        positions,
+        capacity_latency,
+        color=ARCHITECTURE_COLORS["capacity_matched"],
+        label="Added capacity",
+    )
+    axes[0].barh(
+        positions,
+        architecture_latency,
+        left=capacity_latency,
+        color=ARCHITECTURE_COLORS["refined"],
+        label="Architectural refinement",
+    )
+    axes[0].set_yticks(positions)
+    axes[0].set_yticklabels(
+        [scenario_label(value) for value in data["scenario"]]
+    )
+    axes[0].set_xlim(0, 100)
+    axes[0].set_xlabel("Share of latency improvement (%)")
+    axes[0].set_title("Source of latency improvement")
+    axes[0].legend(loc="lower right")
+
+    for index, (capacity, architecture) in enumerate(
+        zip(capacity_latency, architecture_latency)
+    ):
+        if capacity >= 8:
+            axes[0].text(
+                capacity / 2,
+                index,
+                f"{capacity:.0f}%",
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=8,
+            )
+        if architecture >= 8:
+            axes[0].text(
+                capacity + architecture / 2,
+                index,
+                f"{architecture:.0f}%",
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=8,
+            )
+
+    capacity_success = data["success_from_capacity"]
+    architecture_success = data[
+        "success_from_architecture"
+    ]
+    capacity_error = np.vstack(
+        [
+            capacity_success
+            - data["success_from_capacity_ci95_low"],
+            data["success_from_capacity_ci95_high"]
+            - capacity_success,
+        ]
+    ).clip(min=0.0)
+    architecture_error = np.vstack(
+        [
+            architecture_success
+            - data["success_from_architecture_ci95_low"],
+            data["success_from_architecture_ci95_high"]
+            - architecture_success,
+        ]
+    ).clip(min=0.0)
+
+    bar_height = 0.34
+    axes[1].barh(
+        positions - bar_height / 2,
+        capacity_success,
+        height=bar_height,
+        xerr=capacity_error,
+        color=ARCHITECTURE_COLORS["capacity_matched"],
+        label="Added capacity",
+        capsize=2,
+    )
+    axes[1].barh(
+        positions + bar_height / 2,
+        architecture_success,
+        height=bar_height,
+        xerr=architecture_error,
+        color=ARCHITECTURE_COLORS["refined"],
+        label="Architectural refinement",
+        capsize=2,
+    )
+    axes[1].set_yticks(positions)
+    axes[1].set_yticklabels([])
+    axes[1].set_xlabel("Absolute improvement in success rate")
+    axes[1].set_title("Source of success-rate improvement")
+    axes[1].axvline(0, color="black", linewidth=0.8)
+    axes[1].legend(loc="lower right")
+
+    figure.savefig(
+        FIGURES_DIRECTORY / "capacity_attribution.png",
+        bbox_inches="tight",
+    )
+    figure.savefig(
+        FIGURES_DIRECTORY / "capacity_attribution.pdf",
+        bbox_inches="tight",
+    )
+
+    plt.close(figure)
+
+
 def parse_arguments() -> argparse.Namespace:
     """Read result and figure directories from the command line."""
 
@@ -657,6 +788,7 @@ def main() -> None:
     configure_plot_style()
 
     plot_architecture_comparison()
+    plot_capacity_attribution()
     plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
@@ -670,6 +802,8 @@ def main() -> None:
     print(
         "Created architecture_scenario_comparison.pdf"
     )
+    print("Created capacity_attribution.png")
+    print("Created capacity_attribution.pdf")
     print("Created workload_sensitivity.png")
     print("Created workload_sensitivity.pdf")
     print("Created trust_failure_sensitivity.png")
