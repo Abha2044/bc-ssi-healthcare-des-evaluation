@@ -16,8 +16,68 @@ from typing import Dict, List, Set, Tuple
 
 MS = 1000.0
 
+# Parameters copied from refined for each ablation group.
+# Everything not listed stays at its baseline setting.
+ABLATION_PARAMETER_GROUPS = {
+    "trust_cache_only": [
+        "trust_cache_enabled",
+        "trust_cache_hit_probability",
+        "trust_cache_ttl_seconds",
+        "cached_trust_lookup_mean_ms",
+        "cached_trust_lookup_std_ms",
+    ],
+    "fallback_retry_only": [
+        "fallback_trust_enabled",
+        "fallback_policy",
+        "circuit_breaker_enabled",
+        "max_retry_attempts",
+        "retry_backoff_base_ms",
+    ],
+        "connector_redundancy_only": [
+        "connector_redundancy_enabled",
+        "connector_capacity",
+        "connector_failure_probability",
+        "connector_full_in_access",
+    ],
+        "session_manager_only": [
+        "session_manager_enabled",
+        "cross_device_sync_enabled",
+        "session_service_capacity",
+        "session_sync_mean_ms",
+        "session_revalidation_interval_seconds",
+        "revocation_delay_failure_probability",
+    ],
+        "status_revocation_only": [
+        "explicit_status_check_enabled",
+        "status_service_capacity",
+        "credential_status_mean_ms",
+        "credential_status_failure_probability",
+        "revocation_check_mean_ms",
+    ],
+        "audit_compliance_only": [
+        "audit_tagging_enabled",
+        "audit_reconstruction_mean_ms",
+        "audit_reconstruction_failure_probability",
+        "compliance_recording_mean_ms",
+        "compliance_service_capacity",
+        "compliance_required",
+    ],
+        "policy_capability_only": [
+        "obligation_handling_enabled",
+        "data_minimization_enabled",
+        "obligation_handling_mean_ms",
+        "data_minimization_mean_ms",
+    ],
+        "fhir_anonymization_only": [
+        "fhir_complete_in_integration",
+        "anonymization_enabled",
+        "anonymization_mean_ms",
+        "anonymizer_capacity",
+    ],
+}
 
 @dataclass
+
 class RequestContext:
     """State accumulated while processing one request."""
 
@@ -1891,6 +1951,35 @@ class SimulationEngine:
                 results.append(result)
 
         return results
+
+def build_ablation_parameters(
+    config: Dict,
+    variant: str,
+) -> Dict:
+    """Build an independent parameter set for one ablation variant."""
+
+    if variant == "baseline":
+        return deepcopy(config["baseline"])
+
+    if variant == "full_refined":
+        return deepcopy(config["refined"])
+
+    if variant not in ABLATION_PARAMETER_GROUPS:
+        raise ValueError(f"Unknown ablation variant: {variant}")
+
+    # Start with baseline behaviour and resource capacities.
+    parameters = deepcopy(config["baseline"])
+
+    # Apply only the selected refinement group's parameters.
+    for name in ABLATION_PARAMETER_GROUPS[variant]:
+        if name not in parameters or name not in config["refined"]:
+            raise ValueError(
+                f"Missing ablation parameter: {variant}.{name}"
+            )
+
+        parameters[name] = deepcopy(config["refined"][name])
+
+    return parameters
 def run_selected_scenario(
     engine: SimulationEngine,
     scenario: str,
@@ -2716,6 +2805,54 @@ def parse_arguments() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def run_ablation_experiment(config: Dict) -> pd.DataFrame:
+    """Test each refinement group separately across selected scenarios."""
+
+    rows = []
+    experiments = config["experiments"]
+    replication_count = int(config["simulation"]["replications"])
+
+    for variant in experiments["ablation_variants"]:
+        experiment_config = deepcopy(config)
+        experiment_config[variant] = build_ablation_parameters(
+            config, variant
+        )
+
+        for scenario in experiments["ablation_scenarios"]:
+            for replication in range(replication_count):
+                engine = SimulationEngine(
+                    experiment_config,
+                    variant,
+                    replication,
+                )
+                results = run_selected_scenario(engine, scenario)
+
+                if not results:
+                    raise ValueError(
+                        f"No measured requests: {variant}, "
+                        f"{scenario}, replication {replication}"
+                    )
+
+                rows.append({
+                    "variant": variant,
+                    "scenario": scenario,
+                    "replication": replication,
+                    "total_requests": len(results),
+                    "success_rate": sum(
+                        result.success for result in results
+                    ) / len(results),
+                    # Include both successful and failed requests,
+                    # consistent with the main experiment summaries.
+                    "average_latency_ms": sum(
+                        result.latency_ms for result in results
+                    ) / len(results),
+                })
+
+            print(f"Ablation completed: {variant}, {scenario}")
+
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
 
@@ -2871,6 +3008,35 @@ def main() -> None:
     output_directory = root / arguments.output_directory
     output_directory.mkdir(exist_ok=True)
 
+
+    print("\nRunning ablation experiment...")
+
+    ablation_results = run_ablation_experiment(config)
+
+    ablation_results.to_csv(
+        output_directory / "ablation_by_replication.csv",
+        index=False,
+    )
+
+    ablation_summary = (
+        ablation_results.groupby(
+            ["variant", "scenario"],
+            as_index=False,
+        )
+        .agg(
+            replications=("replication", "nunique"),
+            mean_total_requests=("total_requests", "mean"),
+            mean_success_rate=("success_rate", "mean"),
+            mean_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
+
+    ablation_summary.to_csv(
+        output_directory / "ablation_summary.csv",
+        index=False,
+    )
+
+    print("Ablation experiment completed.")
     detail.to_csv(
         output_directory / "baseline_refined_detail.csv",
         index=False,
