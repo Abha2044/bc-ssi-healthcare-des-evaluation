@@ -1,7 +1,7 @@
 """Discrete-event evaluation of the BC-SSI healthcare architecture."""
 
 from __future__ import annotations
-
+import argparse
 import json
 import math
 import random
@@ -2326,11 +2326,43 @@ def run_cache_ttl_sensitivity(
             )
 
     return pd.DataFrame(rows)
+
+def parse_arguments() -> argparse.Namespace:
+    """Read optional configuration and output paths."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the BC-SSI healthcare DES experiments."
+        )
+    )
+
+    parser.add_argument(
+        "--config",
+        default="config_advanced.json",
+        help=(
+            "Configuration file relative to the project "
+            "directory."
+        ),
+    )
+
+    parser.add_argument(
+        "--output-directory",
+        default="results",
+        help=(
+            "Output directory relative to the project "
+            "directory."
+        ),
+    )
+
+    return parser.parse_args()
+
 def main() -> None:
     """Compare baseline and refined architecture simulations."""
 
+    arguments = parse_arguments()
+
     root = Path(__file__).resolve().parent
-    config_path = root / "config_advanced.json"
+    config_path = root / arguments.config
 
     config = json.loads(
         config_path.read_text(encoding="utf-8")
@@ -2472,7 +2504,7 @@ def main() -> None:
         )
     )
 
-    output_directory = root / "results"
+    output_directory = root / arguments.output_directory
     output_directory.mkdir(exist_ok=True)
 
     detail.to_csv(
