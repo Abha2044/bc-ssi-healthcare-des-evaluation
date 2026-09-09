@@ -15,6 +15,10 @@ INPUT_PATH = (
     RESULTS_DIRECTORY
     / "baseline_refined_by_replication.csv"
 )
+DETAIL_INPUT_PATH = (
+    RESULTS_DIRECTORY
+    / "baseline_refined_detail.csv"
+)
 def confidence_interval(
     values: pd.Series,
     confidence: float = 0.95,
@@ -223,6 +227,79 @@ def build_paired_comparison_summary(
             )
 
     return pd.DataFrame(rows)
+
+def build_latency_percentiles(
+    detail: pd.DataFrame,
+) -> pd.DataFrame:
+    """Calculate request-latency percentiles per replication."""
+
+    rows = []
+
+    grouped = detail.groupby(
+        ["architecture", "scenario", "replication"],
+        sort=True,
+    )
+
+    for (
+        architecture,
+        scenario,
+        replication,
+    ), group in grouped:
+        latency = group["latency_ms"].astype(float)
+
+        rows.append(
+            {
+                "architecture": architecture,
+                "scenario": scenario,
+                "replication": replication,
+                "requests": len(group),
+                "p50_latency_ms": latency.quantile(0.50),
+                "p95_latency_ms": latency.quantile(0.95),
+                "p99_latency_ms": latency.quantile(0.99),
+                "maximum_latency_ms": latency.max(),
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+def build_latency_percentile_summary(
+    percentiles: pd.DataFrame,
+) -> pd.DataFrame:
+    """Summarize latency percentiles across replications."""
+
+    rows = []
+
+    grouped = percentiles.groupby(
+        ["architecture", "scenario"],
+        sort=True,
+    )
+
+    for (architecture, scenario), group in grouped:
+        row = {
+            "architecture": architecture,
+            "scenario": scenario,
+            "replications": len(group),
+        }
+
+        for column in [
+            "p50_latency_ms",
+            "p95_latency_ms",
+            "p99_latency_ms",
+            "maximum_latency_ms",
+        ]:
+            mean, _, ci_low, ci_high = confidence_interval(
+                group[column]
+            )
+
+            prefix = column.replace("_latency_ms", "")
+
+            row[f"mean_{column}"] = mean
+            row[f"{prefix}_ci95_low_ms"] = ci_low
+            row[f"{prefix}_ci95_high_ms"] = ci_high
+
+        rows.append(row)
+
+    return pd.DataFrame(rows)
 def main() -> None:
     """Create statistical summaries from simulation replications."""
 
@@ -233,6 +310,22 @@ def main() -> None:
 
     results = pd.read_csv(INPUT_PATH)
 
+    if not DETAIL_INPUT_PATH.exists():
+        raise FileNotFoundError(
+            f"Detailed result file not found: "
+            f"{DETAIL_INPUT_PATH}"
+        )
+
+    detail = pd.read_csv(DETAIL_INPUT_PATH)
+
+    latency_percentiles = build_latency_percentiles(
+        detail
+    )
+    latency_percentile_summary = (
+        build_latency_percentile_summary(
+            latency_percentiles
+        )
+    )
     confidence_summary = (
         build_confidence_interval_summary(results)
     )
@@ -250,6 +343,17 @@ def main() -> None:
         index=False,
     )
 
+    latency_percentiles.to_csv(
+        RESULTS_DIRECTORY
+        / "latency_percentiles_by_replication.csv",
+        index=False,
+    )
+    latency_percentile_summary.to_csv(
+        RESULTS_DIRECTORY
+        / "latency_percentiles_summary.csv",
+        index=False,
+    )
+
     print("Statistical analysis completed.")
     print(
         "Created statistical_confidence_intervals.csv"
@@ -257,7 +361,9 @@ def main() -> None:
     print(
         "Created statistical_paired_comparisons.csv"
     )
-
+    print(
+        "Created latency percentile result files."
+    )
 
 if __name__ == "__main__":
     main()
