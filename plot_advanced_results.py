@@ -1,7 +1,7 @@
 """Create publication-quality figures from DES result files."""
 
 from __future__ import annotations
-
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -610,9 +610,48 @@ def plot_connector_capacity_sensitivity() -> None:
     )
 
     plt.close(figure)
+
+def parse_arguments() -> argparse.Namespace:
+    """Read result and figure directories from the command line."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plot BC-SSI healthcare DES results."
+        )
+    )
+
+    parser.add_argument(
+        "--results-directory",
+        default="results",
+        help=(
+            "Input result directory relative to the "
+            "project directory."
+        ),
+    )
+
+    parser.add_argument(
+        "--figures-directory",
+        default="figures",
+        help=(
+            "Output figure directory relative to the "
+            "project directory."
+        ),
+    )
+
+    return parser.parse_args()
 def main() -> None:
     """Generate all publication figures."""
+    global RESULTS_DIRECTORY
+    global FIGURES_DIRECTORY
 
+    arguments = parse_arguments()
+
+    RESULTS_DIRECTORY = (
+        ROOT / arguments.results_directory
+    )
+    FIGURES_DIRECTORY = (
+        ROOT / arguments.figures_directory
+    )
     FIGURES_DIRECTORY.mkdir(exist_ok=True)
     configure_plot_style()
 

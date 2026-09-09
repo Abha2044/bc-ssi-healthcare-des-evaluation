@@ -1,7 +1,7 @@
 """Statistical analysis of the BC-SSI healthcare DES results."""
 
 from __future__ import annotations
-
+import argparse
 import math
 from pathlib import Path
 
@@ -10,15 +10,7 @@ from scipy import stats
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_DIRECTORY = ROOT / "results"
-INPUT_PATH = (
-    RESULTS_DIRECTORY
-    / "baseline_refined_by_replication.csv"
-)
-DETAIL_INPUT_PATH = (
-    RESULTS_DIRECTORY
-    / "baseline_refined_detail.csv"
-)
+ROOT = Path(__file__).resolve().parent
 def confidence_interval(
     values: pd.Series,
     confidence: float = 0.95,
@@ -300,68 +292,100 @@ def build_latency_percentile_summary(
         rows.append(row)
 
     return pd.DataFrame(rows)
+def parse_arguments() -> argparse.Namespace:
+    """Read the result directory from the command line."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Analyse BC-SSI healthcare DES results."
+        )
+    )
+
+    parser.add_argument(
+        "--results-directory",
+        default="results",
+        help=(
+            "Result directory relative to the project "
+            "directory."
+        ),
+    )
+
+    return parser.parse_args()
 def main() -> None:
     """Create statistical summaries from simulation replications."""
 
-    if not INPUT_PATH.exists():
+arguments = parse_arguments()
+
+results_directory = (
+        ROOT / arguments.results_directory
+    )
+input_path = (
+        results_directory
+        / "baseline_refined_by_replication.csv"
+    )
+detail_input_path = (
+        results_directory
+        / "baseline_refined_detail.csv"
+    )
+
+if not input_path.exists():
         raise FileNotFoundError(
-            f"Simulation result file not found: {INPUT_PATH}"
+            f"Simulation result file not found: {input_path}"
         )
 
-    results = pd.read_csv(INPUT_PATH)
+results = pd.read_csv(input_path)
 
-    if not DETAIL_INPUT_PATH.exists():
+if not detail_input_path.exists():
         raise FileNotFoundError(
             f"Detailed result file not found: "
-            f"{DETAIL_INPUT_PATH}"
+            f"{detail_input_path}"
         )
 
-    detail = pd.read_csv(DETAIL_INPUT_PATH)
+detail = pd.read_csv(detail_input_path)
 
-    latency_percentiles = build_latency_percentiles(
+latency_percentiles = build_latency_percentiles(
         detail
     )
-    latency_percentile_summary = (
+latency_percentile_summary = (
         build_latency_percentile_summary(
             latency_percentiles
         )
     )
-    confidence_summary = (
+confidence_summary = (
         build_confidence_interval_summary(results)
     )
-    paired_summary = build_paired_comparison_summary(results)
-
-    confidence_summary.to_csv(
-        RESULTS_DIRECTORY
+paired_summary = build_paired_comparison_summary(results)
+confidence_summary.to_csv(
+        results_directory
         / "statistical_confidence_intervals.csv",
         index=False,
     )
 
-    paired_summary.to_csv(
-        RESULTS_DIRECTORY
+paired_summary.to_csv(
+        results_directory
         / "statistical_paired_comparisons.csv",
         index=False,
     )
 
-    latency_percentiles.to_csv(
-        RESULTS_DIRECTORY
+latency_percentiles.to_csv(
+        results_directory
         / "latency_percentiles_by_replication.csv",
         index=False,
     )
-    latency_percentile_summary.to_csv(
-        RESULTS_DIRECTORY
+latency_percentile_summary.to_csv(
+        results_directory
         / "latency_percentiles_summary.csv",
         index=False,
     )
 
-    print("Statistical analysis completed.")
-    print(
+print("Statistical analysis completed.")
+print(
         "Created statistical_confidence_intervals.csv"
     )
-    print(
+print(
         "Created statistical_paired_comparisons.csv"
     )
-    print(
+print(
         "Created latency percentile result files."
     )
 
