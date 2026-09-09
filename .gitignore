@@ -6,6 +6,8 @@ venv/
 
 results/
 results_old/
+publication_results/
+publication_figures/
 figures/
 figure_old/
 
