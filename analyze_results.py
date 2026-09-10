@@ -506,7 +506,148 @@ def build_capacity_attribution_summary(
 
     return pd.DataFrame(rows)
 
+def build_ablation_confidence_summary(
+    results: pd.DataFrame,
+) -> pd.DataFrame:
+    """Calculate 95% confidence intervals for ablation outcomes."""
 
+    required_columns = {
+        "variant",
+        "scenario",
+        "replication",
+        "success_rate",
+        "average_latency_ms",
+    }
+
+    missing_columns = required_columns - set(results.columns)
+    if missing_columns:
+        raise ValueError(
+            "Ablation results are missing columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    rows = []
+
+    for (variant, scenario), group in results.groupby(
+        ["variant", "scenario"],
+        sort=True,
+    ):
+        (
+            success_mean,
+            success_std,
+            success_low,
+            success_high,
+        ) = confidence_interval(group["success_rate"])
+
+        (
+            latency_mean,
+            latency_std,
+            latency_low,
+            latency_high,
+        ) = confidence_interval(group["average_latency_ms"])
+
+        rows.append({
+            "variant": variant,
+            "scenario": scenario,
+            "replications": group["replication"].nunique(),
+            "mean_success_rate": success_mean,
+            "success_rate_std": success_std,
+            "success_rate_ci95_low": success_low,
+            "success_rate_ci95_high": success_high,
+            "mean_latency_ms": latency_mean,
+            "latency_std_ms": latency_std,
+            "latency_ci95_low_ms": latency_low,
+            "latency_ci95_high_ms": latency_high,
+        })
+
+    return pd.DataFrame(rows)
+def build_ablation_paired_comparisons(
+    results: pd.DataFrame,
+) -> pd.DataFrame:
+    """Compare each ablation variant with baseline by replication."""
+
+    rows = []
+
+    variants = sorted(
+        variant
+        for variant in results["variant"].unique()
+        if variant != "baseline"
+    )
+
+    for scenario in sorted(results["scenario"].unique()):
+        scenario_data = results[
+            results["scenario"] == scenario
+        ]
+
+        baseline = scenario_data[
+            scenario_data["variant"] == "baseline"
+        ][
+            [
+                "replication",
+                "success_rate",
+                "average_latency_ms",
+            ]
+        ]
+
+        for variant in variants:
+            variant_data = scenario_data[
+                scenario_data["variant"] == variant
+            ][
+                [
+                    "replication",
+                    "success_rate",
+                    "average_latency_ms",
+                ]
+            ]
+
+            paired = baseline.merge(
+                variant_data,
+                on="replication",
+                suffixes=("_baseline", "_variant"),
+                validate="one_to_one",
+            )
+
+            if len(paired) != len(baseline):
+                raise ValueError(
+                    f"Unmatched ablation replications: "
+                    f"{variant}, {scenario}"
+                )
+
+            (
+                success_gain,
+                success_low,
+                success_high,
+                success_p_value,
+            ) = paired_test(
+                paired["success_rate_variant"],
+                paired["success_rate_baseline"],
+            )
+
+            (
+                latency_reduction,
+                latency_low,
+                latency_high,
+                latency_p_value,
+            ) = paired_test(
+                paired["average_latency_ms_baseline"],
+                paired["average_latency_ms_variant"],
+            )
+
+            rows.append({
+                "variant": variant,
+                "scenario": scenario,
+                "replications": len(paired),
+                "success_rate_gain": success_gain,
+                "success_gain_ci95_low": success_low,
+                "success_gain_ci95_high": success_high,
+                "success_p_value": success_p_value,
+                "latency_reduction_ms": latency_reduction,
+                "latency_reduction_ci95_low_ms": latency_low,
+                "latency_reduction_ci95_high_ms": latency_high,
+                "latency_p_value": latency_p_value,
+            })
+
+    return pd.DataFrame(rows)
 def parse_arguments() -> argparse.Namespace:
     """Read the result directory from the command line."""
 
@@ -543,6 +684,10 @@ def main() -> None:
         / "baseline_refined_detail.csv"
     )
 
+    ablation_input_path = (
+        results_directory
+        / "ablation_by_replication.csv"
+    )
     if not input_path.exists():
         raise FileNotFoundError(
             f"Simulation result file not found: {input_path}"
@@ -560,6 +705,13 @@ def main() -> None:
         detail_input_path,
         low_memory=False,
     )
+    if not ablation_input_path.exists():
+        raise FileNotFoundError(
+            f"Ablation result file not found: "
+            f"{ablation_input_path}"
+        )
+
+    ablation_results = pd.read_csv(ablation_input_path)
 
     latency_percentiles = build_latency_percentiles(
         detail
@@ -576,7 +728,16 @@ def main() -> None:
     attribution_summary = build_capacity_attribution_summary(
         results
     )
-
+    ablation_confidence_summary = (
+        build_ablation_confidence_summary(
+            ablation_results
+        )
+    )
+    ablation_paired_comparisons = (
+        build_ablation_paired_comparisons(
+            ablation_results
+        )
+    )
     confidence_summary.to_csv(
         results_directory
         / "statistical_confidence_intervals.csv",
@@ -599,9 +760,16 @@ def main() -> None:
         / "latency_percentiles_summary.csv",
         index=False,
     )
-    attribution_summary.to_csv(
+
+    ablation_confidence_summary.to_csv(
         results_directory
-        / "capacity_attribution_summary.csv",
+        / "ablation_confidence_intervals.csv",
+        index=False,
+    )
+
+    ablation_paired_comparisons.to_csv(
+        results_directory
+        / "ablation_paired_comparisons.csv",
         index=False,
     )
 
@@ -616,6 +784,8 @@ def main() -> None:
         "Created latency percentile result files."
     )
     print("Created capacity_attribution_summary.csv")
+    print("Created ablation_confidence_intervals.csv")
+    print("Created ablation_paired_comparisons.csv")
 
 
 if __name__ == "__main__":
