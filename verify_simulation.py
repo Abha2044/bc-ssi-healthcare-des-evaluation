@@ -215,6 +215,149 @@ def verify_sensitivity_results() -> None:
             f"Missing values found in: {filename}",
         )
 
+def verify_ablation_results(config: dict) -> None:
+    """Check completeness and valid ranges of ablation results."""
+
+    detail_path = (
+        RESULTS_DIRECTORY / "ablation_by_replication.csv"
+    )
+    summary_path = RESULTS_DIRECTORY / "ablation_summary.csv"
+
+    require(
+        detail_path.exists(),
+        f"Ablation result not found: {detail_path}",
+    )
+    require(
+        summary_path.exists(),
+        f"Ablation summary not found: {summary_path}",
+    )
+
+    detail = pd.read_csv(detail_path)
+    summary = pd.read_csv(summary_path)
+
+    require(not detail.empty, "Ablation result is empty.")
+    require(not summary.empty, "Ablation summary is empty.")
+    require(
+        not detail.isnull().any().any(),
+        "Ablation result contains missing values.",
+    )
+    require(
+        not summary.isnull().any().any(),
+        "Ablation summary contains missing values.",
+    )
+
+    variants = set(
+        config["experiments"]["ablation_variants"]
+    )
+    scenarios = set(
+        config["experiments"]["ablation_scenarios"]
+    )
+    replication_count = int(
+        config["simulation"]["replications"]
+    )
+
+    require(
+        set(detail["variant"]) == variants,
+        "Ablation result does not contain all variants.",
+    )
+    require(
+        set(detail["scenario"]) == scenarios,
+        "Ablation result does not contain all scenarios.",
+    )
+
+    expected_detail_rows = (
+        len(variants)
+        * len(scenarios)
+        * replication_count
+    )
+    expected_summary_rows = len(variants) * len(scenarios)
+
+    require(
+        len(detail) == expected_detail_rows,
+        f"Expected {expected_detail_rows} ablation rows, "
+        f"but found {len(detail)}.",
+    )
+    require(
+        len(summary) == expected_summary_rows,
+        f"Expected {expected_summary_rows} ablation summary "
+        f"rows, but found {len(summary)}.",
+    )
+
+    require(
+        detail["success_rate"].between(0, 1).all(),
+        "Ablation success rates are outside [0, 1].",
+    )
+    require(
+        (detail["average_latency_ms"] >= 0).all(),
+        "A negative ablation latency was found.",
+    )
+    require(
+        (detail["total_requests"] > 0).all(),
+        "An ablation replication contains no requests.",
+    )
+
+def verify_ablation_statistics(config: dict) -> None:
+    """Check the statistical ablation output files."""
+
+    files_and_expected_rows = {
+        "ablation_confidence_intervals.csv": (
+            len(config["experiments"]["ablation_variants"])
+            * len(config["experiments"]["ablation_scenarios"])
+        ),
+        "ablation_paired_comparisons.csv": (
+            (
+                len(config["experiments"]["ablation_variants"])
+                - 1
+            )
+            * len(config["experiments"]["ablation_scenarios"])
+        ),
+        "ablation_overall_confidence_intervals.csv": len(
+            config["experiments"]["ablation_variants"]
+        ),
+    }
+
+    for filename, expected_rows in (
+        files_and_expected_rows.items()
+    ):
+        path = RESULTS_DIRECTORY / filename
+
+        require(
+            path.exists(),
+            f"Ablation statistical result not found: {filename}",
+        )
+
+        data = pd.read_csv(path)
+
+        require(
+            not data.empty,
+            f"Ablation statistical result is empty: {filename}",
+        )
+        require(
+            not data.isnull().any().any(),
+            f"Missing values found in: {filename}",
+        )
+        require(
+            len(data) == expected_rows,
+            f"Expected {expected_rows} rows in {filename}, "
+            f"but found {len(data)}.",
+        )
+
+        if "replications" in data.columns:
+            require(
+                (
+                    data["replications"]
+                    == config["simulation"]["replications"]
+                ).all(),
+                f"Incorrect replication count in {filename}.",
+            )
+
+        for column in data.columns:
+            if column.endswith("_p_value"):
+                require(
+                    data[column].between(0, 1).all(),
+                    f"Invalid p-values in {filename}: {column}",
+                )
+
 def main() -> None:
     """Run all verification checks."""
 
@@ -231,6 +374,12 @@ def main() -> None:
 
     verify_sensitivity_results()
     print("Sensitivity result checks passed.")
+
+    verify_ablation_results(config)
+    print("Ablation result checks passed.")
+
+    verify_ablation_statistics(config)
+    print("Ablation statistical checks passed.")
 
     print("\nAll simulation verification checks passed.")
 
