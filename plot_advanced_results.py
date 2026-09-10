@@ -1056,47 +1056,82 @@ def plot_atam_gap_tracking() -> None:
     plt.close(figure)
 
 def plot_ablation_comparison() -> None:
-    """Compare refinement packages using equal scenario weights."""
+    """Plot overall ablation outcomes with 95% confidence intervals."""
 
     data = pd.read_csv(
-        RESULTS_DIRECTORY / "ablation_summary.csv"
-    )
+        RESULTS_DIRECTORY
+        / "ablation_overall_confidence_intervals.csv"
+    ).sort_values("mean_latency_ms")
 
-    # Every scenario contributes equally to the overall mean.
-    overall = (
-        data.groupby("variant")["mean_latency_ms"]
-        .mean()
-        .sort_values()
-    )
+    labels = [
+        variant.replace("_", " ")
+        for variant in data["variant"]
+    ]
 
     colors = [
         "#4C72B0" if variant == "baseline"
         else "#55A868" if variant == "full_refined"
         else "#999999"
-        for variant in overall.index
+        for variant in data["variant"]
     ]
 
-    figure, axis = plt.subplots(
-        figsize=(11, 6),
+    latency_error = np.vstack([
+        data["mean_latency_ms"]
+        - data["latency_ci95_low_ms"],
+        data["latency_ci95_high_ms"]
+        - data["mean_latency_ms"],
+    ])
+
+    success_error = np.vstack([
+        data["mean_success_rate"]
+        - data["success_rate_ci95_low"],
+        data["success_rate_ci95_high"]
+        - data["mean_success_rate"],
+    ])
+
+    figure, axes = plt.subplots(
+        1,
+        2,
+        figsize=(14, 7),
         constrained_layout=True,
     )
 
-    labels = [
-        variant.replace("_", " ")
-        for variant in overall.index
-    ]
-
-    axis.barh(labels, overall.values, color=colors)
-    axis.invert_yaxis()
-    axis.set_xlabel(
-        "Mean latency across scenarios (ms; equal scenario weights)"
+    axes[0].barh(
+        labels,
+        data["mean_latency_ms"],
+        xerr=latency_error,
+        color=colors,
+        capsize=3,
     )
-    axis.set_title("Ablation: individual refinement packages")
+    axes[0].invert_yaxis()
+    axes[0].set_title("Latency by refinement package")
+    axes[0].set_xlabel("Mean latency (ms)")
 
-    # Full refined also includes changes outside these packages.
+    axes[1].barh(
+        labels,
+        data["mean_success_rate"],
+        xerr=success_error,
+        color=colors,
+        capsize=3,
+    )
+    axes[1].invert_yaxis()
+    axes[1].set_title("Success rate by refinement package")
+    axes[1].set_xlabel("Mean success rate")
+    axes[1].set_xlim(
+        max(
+            0.0,
+            float(data["success_rate_ci95_low"].min()) - 0.02,
+        ),
+        1.0,
+    )
+
+    figure.suptitle(
+        "Ablation results across ten scenarios",
+        fontsize=15,
+    )
     figure.supxlabel(
-        "Packages may include capacity and failure-parameter changes; "
-        "full refined includes additional changes.",
+        "Equal scenario weights; error bars show 95% "
+        "Student-t confidence intervals",
         fontsize=9,
     )
 

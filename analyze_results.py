@@ -648,6 +648,58 @@ def build_ablation_paired_comparisons(
             })
 
     return pd.DataFrame(rows)
+
+def build_ablation_overall_summary(
+    results: pd.DataFrame,
+) -> pd.DataFrame:
+    """Summarize ablation outcomes with equal scenario weights."""
+
+    # First average the ten scenarios within each replication.
+    by_replication = (
+        results.groupby(
+            ["variant", "replication"],
+            as_index=False,
+        )
+        .agg(
+            success_rate=("success_rate", "mean"),
+            average_latency_ms=("average_latency_ms", "mean"),
+        )
+    )
+
+    rows = []
+
+    for variant, group in by_replication.groupby(
+        "variant",
+        sort=True,
+    ):
+        (
+            success_mean,
+            success_std,
+            success_low,
+            success_high,
+        ) = confidence_interval(group["success_rate"])
+
+        (
+            latency_mean,
+            latency_std,
+            latency_low,
+            latency_high,
+        ) = confidence_interval(group["average_latency_ms"])
+
+        rows.append({
+            "variant": variant,
+            "replications": group["replication"].nunique(),
+            "mean_success_rate": success_mean,
+            "success_rate_std": success_std,
+            "success_rate_ci95_low": success_low,
+            "success_rate_ci95_high": success_high,
+            "mean_latency_ms": latency_mean,
+            "latency_std_ms": latency_std,
+            "latency_ci95_low_ms": latency_low,
+            "latency_ci95_high_ms": latency_high,
+        })
+
+    return pd.DataFrame(rows)
 def parse_arguments() -> argparse.Namespace:
     """Read the result directory from the command line."""
 
@@ -738,6 +790,12 @@ def main() -> None:
             ablation_results
         )
     )
+
+    ablation_overall_summary = (
+        build_ablation_overall_summary(
+            ablation_results
+        )
+    )
     confidence_summary.to_csv(
         results_directory
         / "statistical_confidence_intervals.csv",
@@ -773,6 +831,12 @@ def main() -> None:
         index=False,
     )
 
+    ablation_overall_summary.to_csv(
+        results_directory
+        / "ablation_overall_confidence_intervals.csv",
+        index=False,
+    )
+
     print("Statistical analysis completed.")
     print(
         "Created statistical_confidence_intervals.csv"
@@ -786,7 +850,9 @@ def main() -> None:
     print("Created capacity_attribution_summary.csv")
     print("Created ablation_confidence_intervals.csv")
     print("Created ablation_paired_comparisons.csv")
-
+    print(
+        "Created ablation_overall_confidence_intervals.csv"
+    )
 
 if __name__ == "__main__":
     main()
