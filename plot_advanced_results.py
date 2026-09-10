@@ -1055,6 +1055,59 @@ def plot_atam_gap_tracking() -> None:
 
     plt.close(figure)
 
+def plot_ablation_comparison() -> None:
+    """Compare refinement packages using equal scenario weights."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY / "ablation_summary.csv"
+    )
+
+    # Every scenario contributes equally to the overall mean.
+    overall = (
+        data.groupby("variant")["mean_latency_ms"]
+        .mean()
+        .sort_values()
+    )
+
+    colors = [
+        "#4C72B0" if variant == "baseline"
+        else "#55A868" if variant == "full_refined"
+        else "#999999"
+        for variant in overall.index
+    ]
+
+    figure, axis = plt.subplots(
+        figsize=(11, 6),
+        constrained_layout=True,
+    )
+
+    labels = [
+        variant.replace("_", " ")
+        for variant in overall.index
+    ]
+
+    axis.barh(labels, overall.values, color=colors)
+    axis.invert_yaxis()
+    axis.set_xlabel(
+        "Mean latency across scenarios (ms; equal scenario weights)"
+    )
+    axis.set_title("Ablation: individual refinement packages")
+
+    # Full refined also includes changes outside these packages.
+    figure.supxlabel(
+        "Packages may include capacity and failure-parameter changes; "
+        "full refined includes additional changes.",
+        fontsize=9,
+    )
+
+    for extension in ("png", "pdf"):
+        figure.savefig(
+            FIGURES_DIRECTORY
+            / f"ablation_comparison.{extension}",
+            bbox_inches="tight",
+        )
+
+    plt.close(figure)
 
 def parse_arguments() -> argparse.Namespace:
     """Read result and figure directories from the command line."""
@@ -1104,7 +1157,7 @@ def main() -> None:
     plot_capacity_attribution()
     plot_resource_saturation()
     plot_mixed_workload_stability()
-    plot_atam_gap_tracking()
+    plot_ablation_comparison()
     plot_workload_sensitivity()
     plot_trust_failure_sensitivity()
     plot_cache_ttl_sensitivity()
