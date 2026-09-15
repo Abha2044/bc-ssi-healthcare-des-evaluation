@@ -171,6 +171,79 @@ def plot_architecture_comparison() -> None:
     )
 
     plt.close(figure)
+
+def plot_p95_latency_comparison() -> None:
+    """Plot P95 latency by architecture and scenario."""
+
+    data = pd.read_csv(
+        RESULTS_DIRECTORY
+        / "latency_percentiles_summary.csv"
+    )
+
+    scenarios = sorted(data["scenario"].unique())
+    architectures = [
+        "baseline",
+        "capacity_matched",
+        "refined",
+    ]
+
+    y_positions = np.arange(len(scenarios))
+    bar_height = 0.24
+
+    figure, axis = plt.subplots(
+        figsize=(9, 7),
+        constrained_layout=True,
+    )
+
+    for index, architecture in enumerate(architectures):
+        architecture_data = (
+            data[data["architecture"] == architecture]
+            .set_index("scenario")
+            .loc[scenarios]
+        )
+
+        positions = y_positions + (index - 1) * bar_height
+        p95_mean = architecture_data["mean_p95_latency_ms"]
+
+        p95_error = np.vstack(
+            [
+                p95_mean
+                - architecture_data["p95_ci95_low_ms"],
+                architecture_data["p95_ci95_high_ms"]
+                - p95_mean,
+            ]
+        )
+
+        axis.barh(
+            positions,
+            p95_mean,
+            height=bar_height,
+            xerr=p95_error,
+            color=ARCHITECTURE_COLORS[architecture],
+            label=ARCHITECTURE_LABELS[architecture],
+            capsize=2,
+        )
+
+    axis.set_yticks(y_positions)
+    axis.set_yticklabels(
+        [scenario_label(name) for name in scenarios]
+    )
+    axis.invert_yaxis()
+    axis.set_title("P95 latency by scenario")
+    axis.set_xlabel("Mean P95 latency (ms, logarithmic scale)")
+    axis.set_xscale("log")
+    axis.legend(loc="lower right")
+
+    for extension in ("png", "pdf"):
+        figure.savefig(
+            FIGURES_DIRECTORY
+            / f"p95_latency_comparison.{extension}",
+            bbox_inches="tight",
+        )
+
+    plt.close(figure)
+
+
 def plot_workload_sensitivity() -> None:
     """Plot architecture behaviour as workload increases."""
 
@@ -1189,6 +1262,7 @@ def main() -> None:
     configure_plot_style()
 
     plot_architecture_comparison()
+    plot_p95_latency_comparison()
     plot_capacity_attribution()
     plot_resource_saturation()
     plot_mixed_workload_stability()
@@ -1226,5 +1300,7 @@ def main() -> None:
     print("Created credential_status_sensitivity.pdf")
     print("Created connector_capacity_sensitivity.png")
     print("Created connector_capacity_sensitivity.pdf")
+    print("Created p95_latency_comparison.png")
+    print("Created p95_latency_comparison.pdf")
 if __name__ == "__main__":
     main()
