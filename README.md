@@ -18,6 +18,16 @@ The model is an analytical evaluation, not a production healthcare system.
 Configuration values are modelling assumptions and must be justified from the
 architecture description, literature, measurements, or sensitivity analysis.
 
+## Simulation documentation
+
+The completed simulation is documented in two review-oriented files:
+
+- [`docs/simulation_design.md`](docs/simulation_design.md) explains the architecture variants, scenarios, arrival model, queued resources, execution parameters, experiments, measurements, and interpretation boundaries.
+- [`docs/simulation_results.md`](docs/simulation_results.md) presents the main publication-scale results, selected figures, trade-offs, and limitations.
+
+Concise result tables are available under [`docs/evidence/`](docs/evidence/), and the selected publication figures are available under [`docs/figures/`](docs/figures/).
+
+These documents allow reviewers to understand the simulation design and findings without reconstructing them from the Python code and full request-level datasets.
 ## Healthcare scenarios
 
 The main experiment evaluates ten scenarios:
@@ -72,6 +82,10 @@ should not be interpreted as a perfectly isolated causal effect.
 - `verify_simulation.py`: configuration and result-integrity checks.
 - `GAP_COVERAGE.md`: mapping between ATAM gaps, model behaviour, and scenarios.
 - `requirements.txt`: Python dependencies.
+-  `docs/simulation_design.md`: detailed simulation design and assumptions.
+- `docs/simulation_results.md`: summarized publication results and interpretation.
+- `docs/evidence/`: selected publication-scale result summaries.
+- `docs/figures/`: selected publication figures.
 
 Generated `results`, `figures`, `publication_results`, and
 `publication_figures` directories are ignored by Git because they can be
