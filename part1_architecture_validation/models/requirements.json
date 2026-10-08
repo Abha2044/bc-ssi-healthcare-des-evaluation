@@ -12,11 +12,7 @@
       "source_text": "User obtains authorized access to health data (live access or signed snapshot).",
       "primary_control_domain": "access_and_trust",
       "required_capabilities": [
-        {
-          "id": "authenticate_requester",
-          "mandatory": true,
-          "derived_from": "User obtains authorized access"
-        },
+      
         {
           "id": "authorize_health_data_access",
           "mandatory": true,
