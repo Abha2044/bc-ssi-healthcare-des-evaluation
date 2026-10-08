@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "model_purpose": "Capability requirements for architectural coverage validation.",
   "derivation_policy": {
-    "source": "Original requirement table supplied by the researcher",
+    "source": "Original requirement table supplied by the Requirements Appendix B- Table C capability-goal column",
     "rule": "Required capabilities are derived only from the capability-goal text. Component assignments, runtime-flow mappings, ATAM gaps, coverage classifications, and refinements are excluded.",
   },
   "requirements": [
