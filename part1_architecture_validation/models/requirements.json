@@ -1,392 +1,508 @@
 {
-  "schema_version": "1.0",
-  "model_purpose": "Capability requirements for architectural coverage validation.",
+  "schema_version": "1.1",
+  "model_purpose": "Solution-neutral requirement capabilities for architectural coverage validation.",
+  "source_document": {
+    "name": "Requirements Appendix B",
+    "source_section": "Table C capability-goal column"
+  },
   "derivation_policy": {
-    "source": "Original requirement table supplied by the Requirements Appendix B- Table C capability-goal column",
-    "rule": "Required capabilities are derived only from the capability-goal text. Component assignments, runtime-flow mappings, ATAM gaps, coverage classifications, and refinements are excluded.",
+    "rule": "Required capabilities are derived only from the capability-goal text. Runtime-flow steps, component assignments, architectural findings, coverage classifications, and refinements are excluded.",
+    "source_control_domains_are_metadata": true,
+    "source_control_domains_are_not_component_matching_constraints": true,
+    "review_status": "draft_requires_domain_review"
+  },
+  "capability_types": {
+    "behaviour": "An operation or responsibility that can be provided by one or more components.",
+    "architectural_constraint": "A condition that must be assessed across the architecture rather than assigned to one component.",
+    "quality_outcome": "An intended quality effect that requires an explicit assessment criterion or supporting evidence."
+  },
+  "coverage_semantics": {
+    "mandatory": "The capability must be covered.",
+    "conditional": "The capability must be covered when its stated condition applies.",
+    "at_least_one": "At least one listed alternative must be covered.",
+    "applicable_alternatives": "At least one alternative must be supported, and every alternative used by the selected architecture or flow must be covered.",
+    "unresolved_condition": "A conditional capability with unknown applicability must be reported as applicability_not_determined, not covered."
   },
   "requirements": [
     {
       "id": "R1",
       "title": "Authorized Access to Health Data",
-      "source_text": "User obtains authorized access to health data (live access or signed snapshot).",
-      "primary_control_domain": "access_and_trust",
+      "source": {
+        "location": "Table C, R1",
+        "capability_goal": "User obtains authorized access to health data (live access or signed snapshot).",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
       "required_capabilities": [
-<<<<<<< HEAD
         {
-=======
-       {
->>>>>>> 702268634173ae99490de369696617aa131ba805
           "id": "authorize_health_data_access",
-          "mandatory": true,
-          "derived_from": "authorized access to health data"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "authorized access to health data"
         },
         {
-          "id": "provide_live_or_signed_health_data",
-          "mandatory": true,
-          "derived_from": "live access or signed snapshot"
+          "id": "deliver_health_data",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "live access or signed snapshot",
+          "satisfaction_rule": {
+            "type": "at_least_one",
+            "alternatives": [
+              "provide_live_health_data_access",
+              "provide_signed_health_data_snapshot"
+            ]
+          }
         }
       ]
     },
     {
       "id": "R2",
       "title": "Consent and Purpose Enforcement",
-      "source_text": "Capture and enforce consent/purpose constraints over access.",
-      "primary_control_domain": "privacy_and_policy",
+      "source": {
+        "location": "Table C, R2",
+        "capability_goal": "Capture and enforce consent/purpose constraints over access.",
+        "control_domains": [
+          "privacy_and_policy"
+        ]
+      },
       "required_capabilities": [
         {
           "id": "capture_consent_constraints",
-          "mandatory": true,
-          "derived_from": "Capture consent constraints"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Capture ... consent ... constraints"
         },
         {
           "id": "capture_purpose_constraints",
-          "mandatory": true,
-          "derived_from": "Capture purpose constraints"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Capture ... purpose constraints"
         },
         {
           "id": "enforce_consent_and_purpose_constraints",
-          "mandatory": true,
-          "derived_from": "enforce consent/purpose constraints over access"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "enforce consent/purpose constraints over access"
         }
       ]
     },
     {
       "id": "R3",
       "title": "Interoperable Clinical Data",
-      "source_text": "Ingest/serve standardized interoperable clinical data.",
-      "primary_control_domain": "validation_and_integration",
+      "source": {
+        "location": "Table C, R3",
+        "capability_goal": "Ingest/serve standardized interoperable clinical data.",
+        "control_domains": [
+          "validation_and_integration"
+        ]
+      },
       "required_capabilities": [
         {
-          "id": "ingest_standardized_clinical_data",
-          "mandatory": true,
-          "derived_from": "Ingest standardized interoperable clinical data"
+          "id": "ingest_standardized_interoperable_clinical_data",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Ingest ... standardized interoperable clinical data"
         },
         {
-          "id": "serve_standardized_clinical_data",
-          "mandatory": true,
-          "derived_from": "serve standardized interoperable clinical data"
+          "id": "serve_standardized_interoperable_clinical_data",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "serve standardized interoperable clinical data"
         }
       ]
     },
     {
       "id": "R4",
       "title": "Federated Cross-Organization Trust",
-      "source_text": "Accept credentials/assertions across organizations based on federated trust.",
-      "primary_control_domain": "access_and_trust",
+      "source": {
+        "location": "Table C, R4",
+        "capability_goal": "Accept credentials/assertions across organizations based on federated trust.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
       "required_capabilities": [
         {
-          "id": "receive_external_credentials_or_assertions",
-          "mandatory": true,
-          "derived_from": "Accept credentials/assertions across organizations"
+          "id": "accept_cross_organization_credentials_or_assertions",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Accept credentials/assertions across organizations"
         },
         {
-          "id": "resolve_federated_trust",
-          "mandatory": true,
-          "derived_from": "based on federated trust"
-        },
-        {
-          "id": "accept_or_reject_external_assertion",
-          "mandatory": true,
-          "derived_from": "Accept credentials/assertions ... based on federated trust"
+          "id": "base_assertion_acceptance_on_federated_trust",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "based on federated trust"
         }
       ]
     },
     {
       "id": "R5",
       "title": "Credential and Assertion Validation",
-      "source_text": "Validate integrity, issuer authenticity, and status (where supported).",
-      "primary_control_domain": "access_and_trust",
+      "source": {
+        "location": "Table C, R5",
+        "capability_goal": "Validate integrity, issuer authenticity, and status (where supported).",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
       "required_capabilities": [
         {
           "id": "validate_assertion_integrity",
-          "mandatory": true,
-          "derived_from": "Validate integrity"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Validate integrity"
         },
         {
           "id": "validate_issuer_authenticity",
-          "mandatory": true,
-          "derived_from": "issuer authenticity"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "issuer authenticity"
         },
         {
           "id": "validate_credential_status",
-          "mandatory": false,
+          "capability_type": "behaviour",
+          "necessity": "conditional",
           "condition": "A credential-status mechanism is supported by the assertion type or issuer.",
-          "derived_from": "status (where supported)"
-        },
+          "source_fragment": "status (where supported)"
+        }
       ]
     },
     {
       "id": "R6",
       "title": "Patient Identity Binding",
-      "source_text": "Bind identity to patient record deterministically and re-use it.",
-      "primary_control_domain": "access_and_trust",
+      "source": {
+        "location": "Table C, R6",
+        "capability_goal": "Bind identity to patient record deterministically and re-use it.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
       "required_capabilities": [
         {
           "id": "create_deterministic_identity_record_binding",
-          "mandatory": true,
-          "derived_from": "Bind identity to patient record deterministically"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Bind identity to patient record deterministically"
         },
         {
-          "id": "retain_identity_record_binding",
-          "mandatory": true,
-          "derived_from": "re-use it"
-        },
+          "id": "reuse_identity_record_binding",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "re-use it"
+        }
       ]
     },
     {
       "id": "R7",
       "title": "Need-to-Know Policy Enforcement",
-      "source_text": "Enforce need-to-know decisions with obligations (mask/filter).",
-      "primary_control_domain": "privacy_and_policy",
+      "source": {
+        "location": "Table C, R7",
+        "capability_goal": "Enforce need-to-know decisions with obligations (mask/filter).",
+        "control_domains": [
+          "privacy_and_policy"
+        ]
+      },
       "required_capabilities": [
         {
           "id": "enforce_need_to_know_decision",
-          "mandatory": true,
-          "derived_from": "need-to-know decisions"
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Enforce need-to-know decisions"
         },
         {
           "id": "enforce_disclosure_obligations",
-          "mandatory": true,
-          "derived_from": "with obligations""source_fragment": "with obligations (mask/filter)",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "with obligations (mask/filter)",
           "supported_actions": {
             "satisfaction_rule": "at_least_one",
             "alternatives": [
               "mask_response",
               "filter_response"
-            }
-          ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "title": "Data Minimization",
+      "source": {
+        "location": "Table C, R8",
+        "capability_goal": "Minimize data shared (credential-layer and/or API-layer).",
+        "control_domains": [
+          "privacy_and_policy"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "minimize_shared_data",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Minimize data shared (credential-layer and/or API-layer)",
+          "satisfaction_rule": {
+            "type": "applicable_alternatives",
+            "alternatives": [
+              {
+                "id": "minimize_credential_claim_disclosure",
+                "condition": "Credential-layer disclosure is used."
+              },
+              {
+                "id": "minimize_api_response_data",
+                "condition": "API-layer disclosure is used."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "title": "Open Standards and Conformance",
+      "source": {
+        "location": "Table C, R9",
+        "capability_goal": "Ensure use of open data standards and conformance checks.",
+        "control_domains": [
+          "validation_and_integration"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "represent_data_using_open_standards",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "use of open data standards"
         },
         {
-          "id": "R8",
-          "title": "Data Minimization",
-          "source_text": "Minimize data shared (credential-layer and/or API-layer).",
-          "primary_control_domain": "privacy_and_policy",
-          "required_capabilities": [
-            {
-              "id": "determine_minimum_necessary_data",
-              "mandatory": true,
-              "derived_from": "Minimize data shared"
-            },
-            {
-              "id": "minimize_credential_claim_disclosure",
-              "mandatory": false,
-              "condition": "Credential-layer disclosure is used.",
-              "derived_from": "credential-layer"
-            },
-            {
-              "id": "minimize_api_response_data",
-              "mandatory": false,
-              "condition": "API-layer disclosure is used.",
-              "derived_from": "API-layer"
-            }
-          ]
+          "id": "perform_data_conformance_checks",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "conformance checks"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "title": "Asynchronous Integration Workflows",
+      "source": {
+        "location": "Table C, R10",
+        "capability_goal": "Integrate across systems with async workflows, retries, and scheduling.",
+        "control_domains": [
+          "validation_and_integration"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "integrate_across_systems",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "Integrate across systems"
         },
         {
-          "id": "R9",
-          "title": "Open Standards and Conformance",
-          "source_text": "Ensure use of open data standards and conformance checks.",
-          "primary_control_domain": "validation_and_integration",
-          "required_capabilities": [
-            {
-              "id": "represent_data_using_open_standards",
-              "mandatory": true,
-              "derived_from": "use of open data standards"
-            },
-            {
-              "id": "validate_data_conformance",
-              "mandatory": true,
-              "derived_from": "conformance checks"
-            },
-            {
-              "id": "reject_or_flag_nonconformant_data",
-              "mandatory": true,
-              "derived_from": "Ensure ... conformance checks"
-            }
-          ]
+          "id": "support_asynchronous_workflows",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "async workflows"
         },
         {
-          "id": "R10",
-          "title": "Asynchronous Integration Workflows",
-          "source_text": "Integrate across systems with async workflows, retries, and scheduling.",
-          "primary_control_domain": "validation_and_integration",
-          "required_capabilities": [
-            {
-              "id": "integrate_across_systems",
-              "mandatory": true,
-              "derived_from": "Integrate across systems"
-            },
-            {
-              "id": "support_asynchronous_workflows",
-              "mandatory": true,
-              "derived_from": "async workflows"
-            },
-            {
-              "id": "retry_failed_work",
-              "mandatory": true,
-              "derived_from": "retries"
-            },
-            {
-              "id": "schedule_work",
-              "mandatory": true,
-              "derived_from": "scheduling"
-            }
-          ]
+          "id": "retry_failed_work",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "retries"
         },
         {
-          "id": "R11",
-          "title": "Institutional and Regulatory Governance",
-          "source_text": "Align with institutional/regulatory governance (accreditation, compliance evidence).",
-          "primary_control_domain": "access_trust_and_validation",
-          "required_capabilities": [
-            {
-              "id": "identify_applicable_governance_profile",
-              "mandatory": true,
-              "derived_from": "institutional/regulatory governance"
-            },
-            {
-              "id": "enforce_applicable_governance_rules",
-              "mandatory": true,
-              "derived_from": "Align with institutional/regulatory governance"
-            },
-            {
-              "id": "evaluate_accreditation_status",
-              "mandatory": false,
-              "condition": "The applicable governance profile requires accreditation.",
-              "derived_from": "accreditation"
-            },
-            {
-              "id": "produce_compliance_evidence",
-              "mandatory": false,
-              "condition": "The applicable governance profile requires compliance evidence.",
-              "derived_from": "compliance evidence"
-            }
-          ],
-          "coverage_rule": "All mandatory capabilities and every applicable conditional capability must be covered."
+          "id": "schedule_work",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "scheduling"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "title": "Institutional and Regulatory Governance",
+      "source": {
+        "location": "Table C, R11",
+        "capability_goal": "Align with institutional/regulatory governance (accreditation, compliance evidence).",
+        "control_domains": [
+          "access_and_trust",
+          "validation_and_integration"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "support_institutional_and_regulatory_governance_alignment",
+          "capability_type": "architectural_constraint",
+          "necessity": "mandatory",
+          "source_fragment": "Align with institutional/regulatory governance"
         },
         {
-          "id": "R12",
-          "title": "Federated and Decentralized Exchange",
-          "source_text": "Avoid centralized repositories; support federation and decentralized exchange.",
-          "primary_control_domain": "access_and_trust",
-          "required_capabilities": [
-            {
-              "id": "avoid_mandatory_centralized_repository",
-              "mandatory": true,
-              "derived_from": "Avoid centralized repositories"
-            },
-            {
-              "id": "support_federated_operation",
-              "mandatory": true,
-              "derived_from": "support federation"
-            },
-            {
-              "id": "support_decentralized_exchange",
-              "mandatory": true,
-              "derived_from": "decentralized exchange"
-            }
-          ]
+          "id": "evaluate_accreditation_status",
+          "capability_type": "behaviour",
+          "necessity": "conditional",
+          "condition": "The applicable governance profile requires accreditation evaluation.",
+          "source_fragment": "accreditation"
         },
         {
-          "id": "R13",
-          "title": "Open Protocols and Portability",
-          "source_text": "Build on open protocols; no proprietary lock-in.",
-          "primary_control_domain": "access_and_trust",
-          "required_capabilities": [
-            {
-              "id": "use_open_protocols",
-              "mandatory": true,
-              "derived_from": "Build on open protocols"
-            },
-            {
-              "id": "support_implementation_portability",
-              "mandatory": true,
-              "derived_from": "no proprietary lock-in"
-            },
-            {
-              "id": "avoid_mandatory_proprietary_dependency",
-              "mandatory": true,
-              "derived_from": "no proprietary lock-in"
-            }
-          ]
+          "id": "produce_compliance_evidence",
+          "capability_type": "behaviour",
+          "necessity": "conditional",
+          "condition": "The applicable governance profile requires compliance evidence.",
+          "source_fragment": "compliance evidence"
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "title": "Federated and Decentralized Exchange",
+      "source": {
+        "location": "Table C, R12",
+        "capability_goal": "Avoid centralized repositories; support federation and decentralized exchange.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "avoid_mandatory_centralized_repository",
+          "capability_type": "architectural_constraint",
+          "necessity": "mandatory",
+          "source_fragment": "Avoid centralized repositories"
         },
         {
-          "id": "R14",
-          "title": "Reduced Complexity for Common Tasks",
-          "source_text": "Reduce complexity for common tasks via aggregation/SDKs.",
-          "primary_control_domain": "access_and_trust",
-          "required_capabilities": [
-            {
-              "id": "identify_common_user_tasks",
-              "mandatory": true,
-              "derived_from": "common tasks"
-            },
-            {
-              "id": "provide_aggregated_operations_or_sdks",
-              "mandatory": true,
-              "derived_from": "via aggregation/SDKs"
-            },
-            {
-              "id": "reduce_common_task_complexity",
-              "mandatory": true,
-              "derived_from": "Reduce complexity for common tasks"
-            }
-          ]
+          "id": "support_federated_operation",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "support federation"
         },
         {
-          "id": "R15",
-          "title": "Multi-Device and Cross-Platform Access",
-          "source_text": "Support multi-device and cross-platform clients.",
-          "primary_control_domain": "access_and_trust",
-          "required_capabilities": [
-            {
-              "id": "support_multiple_user_devices",
-              "mandatory": true,
-              "derived_from": "multi-device"
-            },
-            {
-              "id": "support_cross_platform_clients",
-              "mandatory": true,
-              "derived_from": "cross-platform clients"
-            }
-          ],
-          "candidate_derived_capabilities": [
-            {
-              "id": "synchronize_security_state_across_devices",
-              "mandatory": false,
-              "derivation_type": "inferred",
-              "coverage_effect": "not_counted_until_confirmed",
-              "derived_from": "Possible but not explicit interpretation of multi-device support"
-            }
-          ]
+          "id": "support_decentralized_exchange",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "decentralized exchange"
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "title": "Open Protocols and Portability",
+      "source": {
+        "location": "Table C, R13",
+        "capability_goal": "Build on open protocols; no proprietary lock-in.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "use_open_protocols",
+          "capability_type": "architectural_constraint",
+          "necessity": "mandatory",
+          "source_fragment": "Build on open protocols"
         },
         {
-          "id": "R16",
-          "title": "Resilience and Observability",
-          "source_text": "Provide resilience: retries, DLQ, circuit breakers, observability.",
-          "primary_control_domain": "validation_and_integration",
-          "required_capabilities": [
-            {
-              "id": "retry_failed_operations",
-              "mandatory": true,
-              "derived_from": "retries"
-            },
-            {
-              "id": "retain_unrecoverable_work_in_dead_letter_queue",
-              "mandatory": true,
-              "derived_from": "DLQ"
-            },
-            {
-              "id": "isolate_repeated_failures_with_circuit_breaker",
-              "mandatory": true,
-              "derived_from": "circuit breakers"
-            },
-            {
-              "id": "provide_operational_observability",
-              "mandatory": true,
-              "derived_from": "observability"
-            }
-          ]
+          "id": "avoid_mandatory_proprietary_dependency",
+          "capability_type": "architectural_constraint",
+          "necessity": "mandatory",
+          "source_fragment": "no proprietary lock-in"
+        }
+      ]
+    },
+    {
+      "id": "R14",
+      "title": "Reduced Complexity for Common Tasks",
+      "source": {
+        "location": "Table C, R14",
+        "capability_goal": "Reduce complexity for common tasks via aggregation/SDKs.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "provide_common_task_simplification_mechanism",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "via aggregation/SDKs",
+          "satisfaction_rule": {
+            "type": "at_least_one",
+            "alternatives": [
+              "provide_aggregated_operations",
+              "provide_client_sdk"
+            ]
+          }
+        },
+        {
+          "id": "reduce_common_task_complexity",
+          "capability_type": "quality_outcome",
+          "necessity": "mandatory",
+          "source_fragment": "Reduce complexity for common tasks"
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "title": "Multi-Device and Cross-Platform Access",
+      "source": {
+        "location": "Table C, R15",
+        "capability_goal": "Support multi-device and cross-platform clients.",
+        "control_domains": [
+          "access_and_trust"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "support_multiple_user_devices",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "multi-device"
+        },
+        {
+          "id": "support_cross_platform_clients",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "cross-platform clients"
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "title": "Resilience and Observability",
+      "source": {
+        "location": "Table C, R16",
+        "capability_goal": "Provide resilience: retries, DLQ, circuit breakers, observability.",
+        "control_domains": [
+          "validation_and_integration"
+        ]
+      },
+      "required_capabilities": [
+        {
+          "id": "retry_failed_operations",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "retries"
+        },
+        {
+          "id": "retain_unrecoverable_work_in_dead_letter_queue",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "DLQ"
+        },
+        {
+          "id": "isolate_repeated_failures_with_circuit_breaker",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "circuit breakers"
+        },
+        {
+          "id": "provide_operational_observability",
+          "capability_type": "behaviour",
+          "necessity": "mandatory",
+          "source_fragment": "observability"
         }
       ]
     }
+  ]
+}
