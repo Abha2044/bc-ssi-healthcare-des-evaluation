@@ -9,7 +9,6 @@
     "rule": "Required capabilities are derived only from the capability-goal text. Runtime-flow steps, component assignments, architectural findings, coverage classifications, and refinements are excluded.",
     "source_control_domains_are_metadata": true,
     "source_control_domains_are_not_component_matching_constraints": true,
-    "review_status": "draft_requires_domain_review"
   },
   "capability_types": {
     "behaviour": "An operation or responsibility that can be provided by one or more components.",
