@@ -1,10 +1,9 @@
 {
   "schema_version": "1.0",
-  "model_purpose": "Solution-neutral capability requirements for architectural coverage validation.",
+  "model_purpose": "Capability requirements for architectural coverage validation.",
   "derivation_policy": {
     "source": "Original requirement table supplied by the researcher",
     "rule": "Required capabilities are derived only from the capability-goal text. Component assignments, runtime-flow mappings, ATAM gaps, coverage classifications, and refinements are excluded.",
-    "review_status": "draft_requires_domain_review"
   },
   "requirements": [
     {
