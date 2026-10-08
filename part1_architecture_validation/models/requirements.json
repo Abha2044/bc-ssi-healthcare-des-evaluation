@@ -1,10 +1,9 @@
 {
   "schema_version": "1.0",
-  "model_purpose": "Solution-neutral capability requirements for architectural coverage validation.",
+  "model_purpose": "Capability requirements for architectural coverage validation.",
   "derivation_policy": {
-    "source": "Original requirement table supplied by the researcher",
+    "source": "Original requirement table supplied by the Requirements Appendix B- Table C capability-goal column",
     "rule": "Required capabilities are derived only from the capability-goal text. Component assignments, runtime-flow mappings, ATAM gaps, coverage classifications, and refinements are excluded.",
-    "review_status": "draft_requires_domain_review"
   },
   "requirements": [
     {
@@ -13,11 +12,6 @@
       "source_text": "User obtains authorized access to health data (live access or signed snapshot).",
       "primary_control_domain": "access_and_trust",
       "required_capabilities": [
-        {
-          "id": "authenticate_requester",
-          "mandatory": true,
-          "derived_from": "User obtains authorized access"
-        },
         {
           "id": "authorize_health_data_access",
           "mandatory": true,
@@ -63,11 +57,6 @@
           "id": "ingest_standardized_clinical_data",
           "mandatory": true,
           "derived_from": "Ingest standardized interoperable clinical data"
-        },
-        {
-          "id": "validate_clinical_data_conformance",
-          "mandatory": true,
-          "derived_from": "standardized interoperable clinical data"
         },
         {
           "id": "serve_standardized_clinical_data",
@@ -120,7 +109,7 @@
           "mandatory": false,
           "condition": "A credential-status mechanism is supported by the assertion type or issuer.",
           "derived_from": "status (where supported)"
-        }
+        },
       ]
     },
     {
@@ -139,11 +128,6 @@
           "mandatory": true,
           "derived_from": "re-use it"
         },
-        {
-          "id": "reuse_identity_record_binding",
-          "mandatory": true,
-          "derived_from": "re-use it"
-        }
       ]
     },
     {
@@ -153,257 +137,252 @@
       "primary_control_domain": "privacy_and_policy",
       "required_capabilities": [
         {
-          "id": "evaluate_need_to_know_decision",
+          "id": "enforce_need_to_know_decision",
           "mandatory": true,
           "derived_from": "need-to-know decisions"
         },
         {
-          "id": "produce_disclosure_obligations",
+          "id": "enforce_disclosure_obligations",
           "mandatory": true,
-          "derived_from": "with obligations"
+          "derived_from": "with obligations""source_fragment": "with obligations (mask/filter)",
+          "supported_actions": {
+            "satisfaction_rule": "at_least_one",
+            "alternatives": [
+              "mask_response",
+              "filter_response"
+            }
+          ]
         },
         {
-          "id": "enforce_decision_and_obligations",
-          "mandatory": true,
-          "derived_from": "Enforce ... decisions with obligations"
+          "id": "R8",
+          "title": "Data Minimization",
+          "source_text": "Minimize data shared (credential-layer and/or API-layer).",
+          "primary_control_domain": "privacy_and_policy",
+          "required_capabilities": [
+            {
+              "id": "determine_minimum_necessary_data",
+              "mandatory": true,
+              "derived_from": "Minimize data shared"
+            },
+            {
+              "id": "minimize_credential_claim_disclosure",
+              "mandatory": false,
+              "condition": "Credential-layer disclosure is used.",
+              "derived_from": "credential-layer"
+            },
+            {
+              "id": "minimize_api_response_data",
+              "mandatory": false,
+              "condition": "API-layer disclosure is used.",
+              "derived_from": "API-layer"
+            }
+          ]
         },
         {
-          "id": "apply_masking_or_filtering",
-          "mandatory": true,
-          "derived_from": "mask/filter"
-        }
-      ]
-    },
-    {
-      "id": "R8",
-      "title": "Data Minimization",
-      "source_text": "Minimize data shared (credential-layer and/or API-layer).",
-      "primary_control_domain": "privacy_and_policy",
-      "required_capabilities": [
-        {
-          "id": "determine_minimum_necessary_data",
-          "mandatory": true,
-          "derived_from": "Minimize data shared"
+          "id": "R9",
+          "title": "Open Standards and Conformance",
+          "source_text": "Ensure use of open data standards and conformance checks.",
+          "primary_control_domain": "validation_and_integration",
+          "required_capabilities": [
+            {
+              "id": "represent_data_using_open_standards",
+              "mandatory": true,
+              "derived_from": "use of open data standards"
+            },
+            {
+              "id": "validate_data_conformance",
+              "mandatory": true,
+              "derived_from": "conformance checks"
+            },
+            {
+              "id": "reject_or_flag_nonconformant_data",
+              "mandatory": true,
+              "derived_from": "Ensure ... conformance checks"
+            }
+          ]
         },
         {
-          "id": "minimize_credential_claim_disclosure",
-          "mandatory": false,
-          "condition": "Credential-layer disclosure is used.",
-          "derived_from": "credential-layer"
+          "id": "R10",
+          "title": "Asynchronous Integration Workflows",
+          "source_text": "Integrate across systems with async workflows, retries, and scheduling.",
+          "primary_control_domain": "validation_and_integration",
+          "required_capabilities": [
+            {
+              "id": "integrate_across_systems",
+              "mandatory": true,
+              "derived_from": "Integrate across systems"
+            },
+            {
+              "id": "support_asynchronous_workflows",
+              "mandatory": true,
+              "derived_from": "async workflows"
+            },
+            {
+              "id": "retry_failed_work",
+              "mandatory": true,
+              "derived_from": "retries"
+            },
+            {
+              "id": "schedule_work",
+              "mandatory": true,
+              "derived_from": "scheduling"
+            }
+          ]
         },
         {
-          "id": "minimize_api_response_data",
-          "mandatory": false,
-          "condition": "API-layer disclosure is used.",
-          "derived_from": "API-layer"
-        }
-      ]
-    },
-    {
-      "id": "R9",
-      "title": "Open Standards and Conformance",
-      "source_text": "Ensure use of open data standards and conformance checks.",
-      "primary_control_domain": "validation_and_integration",
-      "required_capabilities": [
-        {
-          "id": "represent_data_using_open_standards",
-          "mandatory": true,
-          "derived_from": "use of open data standards"
+          "id": "R11",
+          "title": "Institutional and Regulatory Governance",
+          "source_text": "Align with institutional/regulatory governance (accreditation, compliance evidence).",
+          "primary_control_domain": "access_trust_and_validation",
+          "required_capabilities": [
+            {
+              "id": "identify_applicable_governance_profile",
+              "mandatory": true,
+              "derived_from": "institutional/regulatory governance"
+            },
+            {
+              "id": "enforce_applicable_governance_rules",
+              "mandatory": true,
+              "derived_from": "Align with institutional/regulatory governance"
+            },
+            {
+              "id": "evaluate_accreditation_status",
+              "mandatory": false,
+              "condition": "The applicable governance profile requires accreditation.",
+              "derived_from": "accreditation"
+            },
+            {
+              "id": "produce_compliance_evidence",
+              "mandatory": false,
+              "condition": "The applicable governance profile requires compliance evidence.",
+              "derived_from": "compliance evidence"
+            }
+          ],
+          "coverage_rule": "All mandatory capabilities and every applicable conditional capability must be covered."
         },
         {
-          "id": "validate_data_conformance",
-          "mandatory": true,
-          "derived_from": "conformance checks"
+          "id": "R12",
+          "title": "Federated and Decentralized Exchange",
+          "source_text": "Avoid centralized repositories; support federation and decentralized exchange.",
+          "primary_control_domain": "access_and_trust",
+          "required_capabilities": [
+            {
+              "id": "avoid_mandatory_centralized_repository",
+              "mandatory": true,
+              "derived_from": "Avoid centralized repositories"
+            },
+            {
+              "id": "support_federated_operation",
+              "mandatory": true,
+              "derived_from": "support federation"
+            },
+            {
+              "id": "support_decentralized_exchange",
+              "mandatory": true,
+              "derived_from": "decentralized exchange"
+            }
+          ]
         },
         {
-          "id": "reject_or_flag_nonconformant_data",
-          "mandatory": true,
-          "derived_from": "Ensure ... conformance checks"
-        }
-      ]
-    },
-    {
-      "id": "R10",
-      "title": "Asynchronous Integration Workflows",
-      "source_text": "Integrate across systems with async workflows, retries, and scheduling.",
-      "primary_control_domain": "validation_and_integration",
-      "required_capabilities": [
-        {
-          "id": "integrate_across_systems",
-          "mandatory": true,
-          "derived_from": "Integrate across systems"
+          "id": "R13",
+          "title": "Open Protocols and Portability",
+          "source_text": "Build on open protocols; no proprietary lock-in.",
+          "primary_control_domain": "access_and_trust",
+          "required_capabilities": [
+            {
+              "id": "use_open_protocols",
+              "mandatory": true,
+              "derived_from": "Build on open protocols"
+            },
+            {
+              "id": "support_implementation_portability",
+              "mandatory": true,
+              "derived_from": "no proprietary lock-in"
+            },
+            {
+              "id": "avoid_mandatory_proprietary_dependency",
+              "mandatory": true,
+              "derived_from": "no proprietary lock-in"
+            }
+          ]
         },
         {
-          "id": "support_asynchronous_workflows",
-          "mandatory": true,
-          "derived_from": "async workflows"
+          "id": "R14",
+          "title": "Reduced Complexity for Common Tasks",
+          "source_text": "Reduce complexity for common tasks via aggregation/SDKs.",
+          "primary_control_domain": "access_and_trust",
+          "required_capabilities": [
+            {
+              "id": "identify_common_user_tasks",
+              "mandatory": true,
+              "derived_from": "common tasks"
+            },
+            {
+              "id": "provide_aggregated_operations_or_sdks",
+              "mandatory": true,
+              "derived_from": "via aggregation/SDKs"
+            },
+            {
+              "id": "reduce_common_task_complexity",
+              "mandatory": true,
+              "derived_from": "Reduce complexity for common tasks"
+            }
+          ]
         },
         {
-          "id": "retry_failed_work",
-          "mandatory": true,
-          "derived_from": "retries"
+          "id": "R15",
+          "title": "Multi-Device and Cross-Platform Access",
+          "source_text": "Support multi-device and cross-platform clients.",
+          "primary_control_domain": "access_and_trust",
+          "required_capabilities": [
+            {
+              "id": "support_multiple_user_devices",
+              "mandatory": true,
+              "derived_from": "multi-device"
+            },
+            {
+              "id": "support_cross_platform_clients",
+              "mandatory": true,
+              "derived_from": "cross-platform clients"
+            }
+          ],
+          "candidate_derived_capabilities": [
+            {
+              "id": "synchronize_security_state_across_devices",
+              "mandatory": false,
+              "derivation_type": "inferred",
+              "coverage_effect": "not_counted_until_confirmed",
+              "derived_from": "Possible but not explicit interpretation of multi-device support"
+            }
+          ]
         },
         {
-          "id": "schedule_work",
-          "mandatory": true,
-          "derived_from": "scheduling"
-        }
-      ]
-    },
-    {
-      "id": "R11",
-      "title": "Institutional and Regulatory Governance",
-      "source_text": "Align with institutional/regulatory governance (accreditation, compliance evidence).",
-      "primary_control_domain": "access_trust_and_validation",
-      "required_capabilities": [
-        {
-          "id": "identify_applicable_governance_profile",
-          "mandatory": true,
-          "derived_from": "institutional/regulatory governance"
-        },
-        {
-          "id": "enforce_applicable_governance_rules",
-          "mandatory": true,
-          "derived_from": "Align with institutional/regulatory governance"
-        },
-        {
-          "id": "evaluate_accreditation_status",
-          "mandatory": false,
-          "condition": "The applicable governance profile requires accreditation.",
-          "derived_from": "accreditation"
-        },
-        {
-          "id": "produce_compliance_evidence",
-          "mandatory": false,
-          "condition": "The applicable governance profile requires compliance evidence.",
-          "derived_from": "compliance evidence"
-        }
-      ],
-      "coverage_rule": "All mandatory capabilities and every applicable conditional capability must be covered."
-    },
-    {
-      "id": "R12",
-      "title": "Federated and Decentralized Exchange",
-      "source_text": "Avoid centralized repositories; support federation and decentralized exchange.",
-      "primary_control_domain": "access_and_trust",
-      "required_capabilities": [
-        {
-          "id": "avoid_mandatory_centralized_repository",
-          "mandatory": true,
-          "derived_from": "Avoid centralized repositories"
-        },
-        {
-          "id": "support_federated_operation",
-          "mandatory": true,
-          "derived_from": "support federation"
-        },
-        {
-          "id": "support_decentralized_exchange",
-          "mandatory": true,
-          "derived_from": "decentralized exchange"
-        }
-      ]
-    },
-    {
-      "id": "R13",
-      "title": "Open Protocols and Portability",
-      "source_text": "Build on open protocols; no proprietary lock-in.",
-      "primary_control_domain": "access_and_trust",
-      "required_capabilities": [
-        {
-          "id": "use_open_protocols",
-          "mandatory": true,
-          "derived_from": "Build on open protocols"
-        },
-        {
-          "id": "support_implementation_portability",
-          "mandatory": true,
-          "derived_from": "no proprietary lock-in"
-        },
-        {
-          "id": "avoid_mandatory_proprietary_dependency",
-          "mandatory": true,
-          "derived_from": "no proprietary lock-in"
-        }
-      ]
-    },
-    {
-      "id": "R14",
-      "title": "Reduced Complexity for Common Tasks",
-      "source_text": "Reduce complexity for common tasks via aggregation/SDKs.",
-      "primary_control_domain": "access_and_trust",
-      "required_capabilities": [
-        {
-          "id": "identify_common_user_tasks",
-          "mandatory": true,
-          "derived_from": "common tasks"
-        },
-        {
-          "id": "provide_aggregated_operations_or_sdks",
-          "mandatory": true,
-          "derived_from": "via aggregation/SDKs"
-        },
-        {
-          "id": "reduce_common_task_complexity",
-          "mandatory": true,
-          "derived_from": "Reduce complexity for common tasks"
-        }
-      ]
-    },
-    {
-      "id": "R15",
-      "title": "Multi-Device and Cross-Platform Access",
-      "source_text": "Support multi-device and cross-platform clients.",
-      "primary_control_domain": "access_and_trust",
-      "required_capabilities": [
-        {
-          "id": "support_multiple_user_devices",
-          "mandatory": true,
-          "derived_from": "multi-device"
-        },
-        {
-          "id": "support_cross_platform_clients",
-          "mandatory": true,
-          "derived_from": "cross-platform clients"
-        }
-      ],
-      "candidate_derived_capabilities": [
-        {
-          "id": "synchronize_security_state_across_devices",
-          "mandatory": false,
-          "derivation_type": "inferred",
-          "coverage_effect": "not_counted_until_confirmed",
-          "derived_from": "Possible but not explicit interpretation of multi-device support"
-        }
-      ]
-    },
-    {
-      "id": "R16",
-      "title": "Resilience and Observability",
-      "source_text": "Provide resilience: retries, DLQ, circuit breakers, observability.",
-      "primary_control_domain": "validation_and_integration",
-      "required_capabilities": [
-        {
-          "id": "retry_failed_operations",
-          "mandatory": true,
-          "derived_from": "retries"
-        },
-        {
-          "id": "retain_unrecoverable_work_in_dead_letter_queue",
-          "mandatory": true,
-          "derived_from": "DLQ"
-        },
-        {
-          "id": "isolate_repeated_failures_with_circuit_breaker",
-          "mandatory": true,
-          "derived_from": "circuit breakers"
-        },
-        {
-          "id": "provide_operational_observability",
-          "mandatory": true,
-          "derived_from": "observability"
+          "id": "R16",
+          "title": "Resilience and Observability",
+          "source_text": "Provide resilience: retries, DLQ, circuit breakers, observability.",
+          "primary_control_domain": "validation_and_integration",
+          "required_capabilities": [
+            {
+              "id": "retry_failed_operations",
+              "mandatory": true,
+              "derived_from": "retries"
+            },
+            {
+              "id": "retain_unrecoverable_work_in_dead_letter_queue",
+              "mandatory": true,
+              "derived_from": "DLQ"
+            },
+            {
+              "id": "isolate_repeated_failures_with_circuit_breaker",
+              "mandatory": true,
+              "derived_from": "circuit breakers"
+            },
+            {
+              "id": "provide_operational_observability",
+              "mandatory": true,
+              "derived_from": "observability"
+            }
+          ]
         }
       ]
     }
-  ]
-}
