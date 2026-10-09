@@ -1,0 +1,278 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Reviewable semantic mappings for the neutral R7 pilot; these mappings nominate evidence to assess and do not encode coverage results.",
+  "inputs": {
+    "requirements": "requirements.json",
+    "baseline_components": "baseline_components.json",
+    "flows": "flows.json"
+  },
+  "conventions": {
+    "scope": "R7 baseline only.",
+    "candidate_rule": "Candidates suggest possible coverage, not proof.",
+    "assessment_rule": "Check behaviours, interfaces, and source evidence.",
+    "unknown_rule": "Missing or unverified evidence means undetermined.",
+    "absence_rule": "No mapping does not mean no capability.",
+    "state_rule": "Check state only when the behaviour requires it.",
+    "source_rule": "Sources describe design, not verified implementation."
+  },
+  "capability_mappings": [
+    {
+      "id": "MAP-R7-1",
+      "requirement_id": "R7",
+      "capability_id": "enforce_need_to_know_decision",
+      "flow_id": "FLOW-R7",
+      "candidate_providers": [
+        {
+          "component_id": "C6",
+          "behaviour_id": "enforce_need_to_know_decision",
+          "source_basis": "RequirementsAppendixB-refined(1).docx, Section A R7; RequirementsAppendixB-refined(1).docx, Table C R7",
+          "rationale": "Appendix B assigns access-decision enforcement to C6. Interface compatibility and implementation remain separate checks.",
+          "evidence_type": "documented_baseline_design"
+        },
+        {
+          "component_id": "C15",
+          "behaviour_id": "filter_by_authorization",
+          "source_basis": "Table A-0, C15.4 Authorization Filter",
+          "rationale": "An authorization filter may enforce permitted data scope. Its relation to the C4 decision requires confirmation.",
+          "evidence_type": "documented_baseline_design"
+        }
+      ],
+      "required_interaction_ids": [
+        "R7-I1",
+        "R7-I2",
+        "R7-I3",
+        "R7-I4"
+      ],
+      "confirmation_criteria": [
+        {
+          "id": "R7-DECISION-1",
+          "question": "Does the enforcement path apply the access decision to the requested health data rather than merely obtain or forward a decision?",
+          "evidence_refs": [
+            "RequirementsAppendixB-refined(1).docx, Section A R7",
+            "RequirementsAppendixB-refined(1).docx, Table C R7"
+          ],
+          "evidence_type": "documented_baseline_design",
+          "source_basis": "The baseline prose describes scoped permitted access and rejection of denied access.",
+          "remaining_questions": [
+            "Implementation and bypass testing require separate evidence."
+          ]
+        },
+        {
+          "id": "R7-DECISION-2",
+          "question": "Do the policy decision and authorization scope have compatible semantics across C4, C6 and C15?",
+          "evidence_refs": [
+            "RequirementsAppendixB-refined(1).docx, Section A R7",
+            "RequirementsAppendixB-refined(1).docx, Table C R7"
+          ],
+          "evidence_type": "documented_baseline_design",
+          "source_basis": "The baseline flow identifies the C4-C6-C15 responsibility sequence.",
+          "remaining_questions": [
+            "The sequence does not establish compatible decision, obligation, and authorization-scope contracts."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MAP-R7-2",
+      "requirement_id": "R7",
+      "capability_id": "enforce_disclosure_obligations",
+      "flow_id": "FLOW-R7",
+      "required_action_rule": {
+        "type": "at_least_one",
+        "alternatives": [
+          "mask_response",
+          "filter_response"
+        ],
+        "interpretation": "The applicable policy determines whether masking, filtering, or both are required. All applicable obligations must be enforced; supporting one alternative alone does not prove complete coverage.",
+        "all_applicable_obligations_required": true
+      },
+      "candidate_providers": [
+        {
+          "component_id": "C6",
+          "behaviour_id": "enforce_disclosure_obligations",
+          "source_basis": "RequirementsAppendixB-refined(1).docx, Section A R7; RequirementsAppendixB-refined(1).docx, Table C R7",
+          "rationale": "Appendix B assigns mask/filter obligation enforcement to C6. All applicable obligations must be enforced before release; interface compatibility and implementation require separate checks.",
+          "evidence_type": "documented_baseline_design"
+        },
+        {
+          "component_id": "C15",
+          "behaviour_id": "filter_by_authorization",
+          "candidate_action": "filter_response",
+          "source_basis": "Table A-0, C15.4 Authorization Filter",
+          "rationale": "Filtering by authorization is relevant to disclosure filtering. It must be shown to apply policy obligations; generic authorization filtering is not automatically equivalent.",
+          "evidence_type": "documented_baseline_design"
+        }
+      ],
+      "required_interaction_ids": [
+        "R7-I2",
+        "R7-I3",
+        "R7-I4"
+      ],
+      "confirmation_criteria": [
+        {
+          "id": "R7-OBLIGATION-1",
+          "question": "Does the policy response represent applicable mask/filter obligations in a form the enforcement components can interpret?",
+          "evidence_refs": [
+            "RequirementsAppendixB-refined(1).docx, Section A R7",
+            "RequirementsAppendixB-refined(1).docx, Table C R7"
+          ],
+          "evidence_type": "documented_baseline_design",
+          "source_basis": "The baseline description says the policy decision includes obligations.",
+          "remaining_questions": [
+            "The exact obligation representation and consumer interpretation are unspecified."
+          ]
+        },
+        {
+          "id": "R7-OBLIGATION-2",
+          "question": "Does the enforcement path apply every applicable mask/filter obligation before data is released?",
+          "evidence_refs": [
+            "RequirementsAppendixB-refined(1).docx, Section A R7",
+            "RequirementsAppendixB-refined(1).docx, Table C R7"
+          ],
+          "evidence_type": "documented_baseline_design",
+          "source_basis": "The baseline description assigns masking/filtering enforcement to C6 before release.",
+          "remaining_questions": [
+            "Actual execution, all applicable actions, and absence of bypass paths require separate evidence."
+          ]
+        }
+      ]
+    }
+  ],
+  "flow_behaviour_mappings": [
+    {
+      "step_id": "R7-S1",
+      "required_behaviour": "intercept_access_request",
+      "component_id": "C6",
+      "candidate_behaviour_ids": [
+        "intercept_access_request"
+      ],
+      "rationale": "Appendix B documents gateway interception in the baseline R7 path. Coverage of every implementation access path is not established.",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S2",
+      "required_behaviour": "evaluate_policy",
+      "component_id": "C4",
+      "candidate_behaviour_ids": [
+        "evaluate_policy"
+      ],
+      "rationale": "Table A-0 and Appendix B document policy evaluation. Exact input contracts require separate confirmation.",
+      "evidence_refs": [
+        "Appendix_A_corrected.docx, Table A-0, C4.1 Policy Evaluator",
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S3",
+      "required_behaviour": "return_decision_with_obligations",
+      "component_id": "C4",
+      "candidate_behaviour_ids": [
+        "return_decision_with_obligations"
+      ],
+      "rationale": "Appendix B documents permit/deny decisions with obligations. The precise obligation representation remains unspecified.",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S4",
+      "required_behaviour": "enforce_need_to_know_decision",
+      "component_id": "C6",
+      "candidate_behaviour_ids": [
+        "enforce_need_to_know_decision"
+      ],
+      "rationale": "Appendix B documents C6 enforcing the access decision. Decision and authorization-scope compatibility remain to be checked.",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S4",
+      "required_behaviour": "enforce_disclosure_obligations",
+      "component_id": "C6",
+      "candidate_behaviour_ids": [
+        "enforce_disclosure_obligations"
+      ],
+      "rationale": "Appendix B documents C6 applying mask/filter obligations. This supports design responsibility, not successful implementation.",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S5",
+      "required_behaviour": "apply_fhir_labels_or_filters",
+      "component_id": "C15",
+      "candidate_behaviour_ids": [
+        "apply_fhir_labels_or_filters"
+      ],
+      "rationale": "Appendix B assigns FHIR labels/filters to C15 in the enforcement path. This does not establish independent execution of all C6 obligations.",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    },
+    {
+      "step_id": "R7-S6",
+      "required_behaviour": "log_audit_event",
+      "component_id": "C5",
+      "candidate_behaviour_ids": [
+        "log_audit_event"
+      ],
+      "rationale": "Table A-0 and Appendix B document audit logging. Required fields and delivery semantics remain to be checked.",
+      "evidence_refs": [
+        "Appendix_A_corrected.docx, Table A-0, C5.1 Event Logger",
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "evidence_type": "documented_baseline_design"
+    }
+  ],
+  "assessment_boundaries": [
+    "Mappings are inputs, not validation results.",
+    "Missing evidence does not prove missing capability.",
+    "Components may jointly provide a capability.",
+    "Automatic checks do not prove semantic coverage.",
+    "ATAM gaps and refined variants are excluded.",
+    "Design evidence does not prove interface compatibility or implementation.",
+    "Unchecked rules remain unassessed."
+  ],
+  "interface_assessments": [
+    {
+      "id": "ASSESS-R7-I2",
+      "requirement_id": "R7",
+      "flow_id": "FLOW-R7",
+      "interaction_id": "R7-I2",
+      "evidence_type": "documented_baseline_design",
+      "evidence_refs": [
+        "RequirementsAppendixB-refined(1).docx, Section A R7",
+        "RequirementsAppendixB-refined(1).docx, Section B Table A R7",
+        "RequirementsAppendixB-refined(1).docx, Table C R7"
+      ],
+      "documented_content": "C4 returns a permit/deny decision with applicable obligations, such as masking fields or limiting date ranges. C6 is assigned enforcement before data release.",
+      "documented_concepts": [
+        "decision",
+        "obligations"
+      ],
+      "unresolved_questions": [
+        "What is the obligation payload structure and version?",
+        "What field types and allowed values does C4 emit and C6 accept?",
+        "How are mask/filter actions, targets, date ranges and authorization scope interpreted consistently?",
+        "What does C6 do when a required obligation is unsupported, malformed or cannot be enforced?"
+      ],
+      "assessment_boundary": "These conceptual responsibilities are documented. No matching provider and consumer payload contracts have been established. Documented concepts are not verified wire-format fields."
+    }
+  ]
+}
