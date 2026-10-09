@@ -1,0 +1,199 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Required component interactions for neutral architectural validation, starting with an R7 pilot.",
+  "source": {
+    "document": "Requirements Appendix B",
+    "location": "Table C, framework-agnostic runtime-flow column"
+  },
+  "conventions": {
+    "model_role": "Required flow, not proven implementation.",
+    "scope": "R7 pilot only.",
+    "interface_rule": "Interface names reuse baseline names where possible. New contracts are proposed, not verified.",
+    "validation_rule": "Check components, behaviours, roles, and interface compatibility using evidence. Missing evidence means undetermined.",
+    "layer_rule": "Flow domains do not restrict component placement.",
+    "outcome_rule": "No coverage or ATAM conclusions are assumed."
+  },
+  "flows": [
+    {
+      "id": "FLOW-R7",
+      "name": "Need-to-know access with disclosure obligations",
+      "requirement_ids": [
+        "R7"
+      ],
+      "control_domain": "privacy_and_policy",
+      "source_text": "Intercept: C6 -> Decide: C6->C4 (subject/resource/action/purpose) -> Return decision+obligations: C4->C6 -> Enforce: C6 (mask/filter) + C15 (labels/filters) -> Audit: C5",
+      "participants": [
+        "C6",
+        "C4",
+        "C15",
+        "C5"
+      ],
+      "requirement_capability_ids": [
+        "enforce_need_to_know_decision",
+        "enforce_disclosure_obligations"
+      ],
+      "steps": [
+        {
+          "id": "R7-S1",
+          "component": "C6",
+          "responsibility": "Intercept the access request.",
+          "required_behaviour": "intercept_access_request",
+          "depends_on": [],
+          "source_basis": "Intercept: C6"
+        },
+        {
+          "id": "R7-S2",
+          "component": "C4",
+          "responsibility": "Evaluate the subject, resource, action and purpose to make an access decision.",
+          "required_behaviour": "evaluate_policy",
+          "depends_on": [
+            "R7-S1"
+          ],
+          "interaction_ids": [
+            "R7-I1"
+          ],
+          "source_basis": "Decide: C6->C4 (subject/resource/action/purpose)"
+        },
+        {
+          "id": "R7-S3",
+          "component": "C4",
+          "responsibility": "Return the decision and any applicable disclosure obligations to the gateway.",
+          "required_behaviour": "return_decision_with_obligations",
+          "depends_on": [
+            "R7-S2"
+          ],
+          "interaction_ids": [
+            "R7-I2"
+          ],
+          "source_basis": "Return decision+obligations: C4->C6"
+        },
+        {
+          "id": "R7-S4",
+          "component": "C6",
+          "responsibility": "Enforce the need-to-know decision and applicable mask/filter obligations, coordinating with C15.",
+          "required_behaviours": [
+            "enforce_need_to_know_decision",
+            "enforce_disclosure_obligations"
+          ],
+          "depends_on": [
+            "R7-S3"
+          ],
+          "interaction_ids": [
+            "R7-I3",
+            "R7-I4"
+          ],
+          "source_basis": "Enforce: C6 (mask/filter) + C15 (labels/filters)"
+        },
+        {
+          "id": "R7-S5",
+          "component": "C15",
+          "responsibility": "Apply the relevant labels/filters when serving health-record data.",
+          "required_behaviour": "apply_fhir_labels_or_filters",
+          "depends_on": [
+            "R7-S3"
+          ],
+          "interaction_ids": [
+            "R7-I3",
+            "R7-I4"
+          ],
+          "source_basis": "C15 (labels/filters)"
+        },
+        {
+          "id": "R7-S6",
+          "component": "C5",
+          "responsibility": "Record an audit event for the access decision and enforcement outcome.",
+          "required_behaviour": "log_audit_event",
+          "depends_on": [
+            "R7-S4",
+            "R7-S5"
+          ],
+          "interaction_ids": [
+            "R7-I5"
+          ],
+          "source_basis": "Audit: C5"
+        }
+      ],
+      "interactions": [
+        {
+          "id": "R7-I1",
+          "sender": "C6",
+          "receiver": "C4",
+          "provider": "C4",
+          "consumer": "C6",
+          "interface": "policy_decision_api",
+          "direction": "request",
+          "required_payload_fields": [
+            "subject",
+            "resource",
+            "action",
+            "purpose"
+          ],
+          "contract_evidence": "required_from_runtime_flow_not_verified_in_baseline"
+        },
+        {
+          "id": "R7-I2",
+          "sender": "C4",
+          "receiver": "C6",
+          "provider": "C4",
+          "consumer": "C6",
+          "interface": "policy_decision_api",
+          "direction": "response",
+          "required_payload_fields": [
+            "decision",
+            "obligations"
+          ],
+          "contract_evidence": "required_from_runtime_flow_not_verified_in_baseline"
+        },
+        {
+          "id": "R7-I3",
+          "sender": "C6",
+          "receiver": "C15",
+          "provider": "C15",
+          "consumer": "C6",
+          "interface": "fhir_rest_api",
+          "direction": "request",
+          "required_payload_fields": [
+            "data_request",
+            "authorization_scope",
+            "applicable_labels_or_filters"
+          ],
+          "contract_evidence": "derived_contract_requires_review"
+        },
+        {
+          "id": "R7-I4",
+          "sender": "C15",
+          "receiver": "C6",
+          "provider": "C15",
+          "consumer": "C6",
+          "interface": "fhir_rest_api",
+          "direction": "response",
+          "required_payload_fields": [
+            "health_record_data"
+          ],
+          "contract_evidence": "derived_contract_requires_review"
+        },
+        {
+          "id": "R7-I5",
+          "sender": "C6",
+          "receiver": "C5",
+          "provider": "C5",
+          "consumer": "C6",
+          "interface": "audit_event_logging_service",
+          "direction": "event",
+          "required_payload_fields": [
+            "access_decision",
+            "enforcement_outcome"
+          ],
+          "contract_evidence": "derived_contract_requires_review"
+        }
+      ],
+      "assessment_boundaries": [
+        "Supporting flow behaviours do not automatically count as direct R7 capabilities.",
+        "C6-C15 interactions and audit sending are modeling choices requiring review.",
+        "Masking, filtering, and denial audit timing need further evidence.",
+        "Required behaviours do not prove baseline support.",
+        "State requirements must be explicit and supported by evidence."
+      ]
+    }
+  ]
+}
