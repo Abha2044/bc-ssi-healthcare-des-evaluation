@@ -225,6 +225,37 @@
             "outcome": "enforcement_blocked",
             "released_records": []
           }
+        },
+        {
+          "id": "R7-T5",
+          "name": "Mask and date filter apply together",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "mask_fields",
+                "fields": [
+                  "address"
+                ]
+              },
+              {
+                "action": "filter_date_range",
+                "field": "record_date",
+                "from": "2026-09-10",
+                "to": "2026-10-09"
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "permitted",
+            "released_records": [
+              {
+                "id": "record-2",
+                "record_date": "2026-09-20",
+                "clinical_summary": "Recent synthetic record"
+              }
+            ]
+          }
         }
       ],
       "follow_up_tests": [
