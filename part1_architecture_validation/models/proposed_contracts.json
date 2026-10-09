@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Proposed executable contract for the R7 C4-to-C6 policy response. This is a model realization, not evidence of a historical baseline implementation.",
+  "assessment_status": "proposed_not_reviewed_or_tested",
+  "contracts": [
+    {
+      "id": "CONTRACT-R7-I2",
+      "requirement_id": "R7",
+      "flow_id": "FLOW-R7",
+      "interaction_id": "R7-I2",
+      "provider": "C4",
+      "consumer": "C6",
+      "interface": "policy_decision_api",
+      "direction": "response",
+      "source_supported_responsibilities": {
+        "evidence_refs": [
+          "RequirementsAppendixB-refined(1).docx, Section A R7",
+          "RequirementsAppendixB-refined(1).docx, Section B Table A R7",
+          "RequirementsAppendixB-refined(1).docx, Table C R7"
+        ],
+        "statements": [
+          "C4 returns permit or deny with applicable obligations.",
+          "C6 enforces mask/filter obligations before disclosure.",
+          "C15 participates through labels or filters."
+        ],
+        "boundary": "These statements describe conceptual responsibilities; exact payloads and failure rules below are proposed."
+      },
+      "proposed_payload": {
+        "type": "object",
+        "required_fields": [
+          "decision",
+          "obligations"
+        ],
+        "additional_fields_allowed": false,
+        "fields": {
+          "decision": {
+            "type": "string",
+            "allowed_values": [
+              "permit",
+              "deny"
+            ]
+          },
+          "obligations": {
+            "type": "array",
+            "item_variants": [
+              {
+                "action": "mask_fields",
+                "required_fields": [
+                  "action",
+                  "fields"
+                ],
+                "fields": {
+                  "type": "array_of_unique_nonempty_strings"
+                },
+                "meaning": "Remove every named top-level field from every disclosed model record."
+              },
+              {
+                "action": "filter_date_range",
+                "required_fields": [
+                  "action",
+                  "field",
+                  "from",
+                  "to"
+                ],
+                "field": {
+                  "type": "nonempty_string"
+                },
+                "from": {
+                  "type": "ISO_8601_calendar_date"
+                },
+                "to": {
+                  "type": "ISO_8601_calendar_date"
+                },
+                "meaning": "Return only records whose named date lies within the inclusive bounds."
+              }
+            ]
+          }
+        },
+        "example": {
+          "decision": "permit",
+          "obligations": [
+            {
+              "action": "mask_fields",
+              "fields": [
+                "address"
+              ]
+            },
+            {
+              "action": "filter_date_range",
+              "field": "record_date",
+              "from": "2026-09-10",
+              "to": "2026-10-09"
+            }
+          ]
+        }
+      },
+      "proposed_processing_rules": [
+        "Validate the entire decision and every obligation before releasing any data.",
+        "Deny releases no health data.",
+        "Permit applies every supplied obligation; obligations are combined, not selected as alternatives.",
+        "An empty obligations array on a permit decision means no additional disclosure transformation. This does not bypass independently required authorization or consent checks.",
+        "Unknown actions, missing required fields, invalid types or dates, reversed date bounds, additional payload fields, or inability to enforce any obligation block disclosure.",
+        "Filter records first, then remove fields, so masking the date field cannot bypass date filtering.",
+        "A missing or invalid record date when date filtering is required blocks disclosure for this modeled request.",
+        "A mask target absent from a record requires no change to that record because the field is already absent.",
+        "On blocked disclosure, release no partial result and record the enforcement outcome through the separately assessed audit interaction."
+      ],
+      "modeling_assumptions": [
+        {
+          "id": "A-R7-1",
+          "detail": "Field names, action identifiers and JSON representation are proposed; they are not extracted API definitions."
+        },
+        {
+          "id": "A-R7-2",
+          "detail": "Test records are flat synthetic objects, not complete FHIR resources. Masking means field removal, not replacement or cryptographic masking."
+        },
+        {
+          "id": "A-R7-3",
+          "detail": "Dates are calendar dates with inclusive bounds. Timezones, timestamps and nested FHIR paths are outside this pilot."
+        },
+        {
+          "id": "A-R7-4",
+          "detail": "Unsupported, malformed or unenforceable obligations block disclosure. Appendix B does not specify this failure rule."
+        },
+        {
+          "id": "A-R7-5",
+          "detail": "The harness will associate a policy response with the correct request. Correlation, authentication, transport and replay protection are not assessed by this contract."
+        }
+      ],
+      "test_fixture": [
+        {
+          "id": "record-1",
+          "record_date": "2026-09-01",
+          "address": "Synthetic address A",
+          "clinical_summary": "Older synthetic record"
+        },
+        {
+          "id": "record-2",
+          "record_date": "2026-09-20",
+          "address": "Synthetic address B",
+          "clinical_summary": "Recent synthetic record"
+        }
+      ],
+      "planned_test_cases": [
+        {
+          "id": "R7-T1",
+          "name": "Deny prevents disclosure",
+          "policy_response": {
+            "decision": "deny",
+            "obligations": []
+          },
+          "expected": {
+            "outcome": "denied",
+            "released_records": []
+          }
+        },
+        {
+          "id": "R7-T2",
+          "name": "Mask removes prohibited field",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "mask_fields",
+                "fields": [
+                  "address"
+                ]
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "permitted",
+            "released_records": [
+              {
+                "id": "record-1",
+                "record_date": "2026-09-01",
+                "clinical_summary": "Older synthetic record"
+              },
+              {
+                "id": "record-2",
+                "record_date": "2026-09-20",
+                "clinical_summary": "Recent synthetic record"
+              }
+            ]
+          }
+        },
+        {
+          "id": "R7-T3",
+          "name": "Date filtering excludes older record",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "filter_date_range",
+                "field": "record_date",
+                "from": "2026-09-10",
+                "to": "2026-10-09"
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "permitted",
+            "released_records": [
+              {
+                "id": "record-2",
+                "record_date": "2026-09-20",
+                "address": "Synthetic address B",
+                "clinical_summary": "Recent synthetic record"
+              }
+            ]
+          }
+        },
+        {
+          "id": "R7-T4",
+          "name": "Unsupported obligation blocks disclosure",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "unsupported_action"
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "enforcement_blocked",
+            "released_records": []
+          }
+        }
+      ],
+      "follow_up_tests": [
+        "Combined mask and filter obligations",
+        "Malformed or missing obligation fields",
+        "Missing obligations field versus explicitly empty array",
+        "Invalid decision value",
+        "Missing or invalid dates in source records"
+      ],
+      "assessment_boundaries": [
+        "The planned tests have not been executed.",
+        "Testing one shared schema does not establish independently implemented C4 and C6 compatibility. Compare actual producer and consumer contracts when available.",
+        "Passing these cases supports only this proposed realization and tested inputs.",
+        "Complete R7 satisfaction additionally requires policy and consent correctness, all relevant flow interactions, and suitable negative cases.",
+        "This contract must not change historical baseline coverage to full or be treated as an independently reproduced ATAM gap."
+      ]
+    }
+  ]
+}
