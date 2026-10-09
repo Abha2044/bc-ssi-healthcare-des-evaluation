@@ -1,0 +1,179 @@
+{
+  "schema_version": "1.0",
+  "scope": "R7",
+  "purpose": "Sourced C4/C6 variation descriptions and responsibility checks. No expected coverage or PASS results are encoded.",
+  "source_boundaries": [
+    "Appendix B describes conceptual baseline responsibilities.",
+    "Appendix A reports ATAM-derived operational findings and proposed refinements. Those findings are not independent baseline observations.",
+    "Descriptions here do not overwrite baseline_components.json or establish implementation support."
+  ],
+  "baseline_evidence": [
+    {
+      "id": "B-C4",
+      "component_id": "C4",
+      "conceptual_responsibility": "Evaluate policy and return a decision with applicable obligations.",
+      "conceptual_source": "Requirements Appendix B, Section A R7 and Table C R7",
+      "operational_assessment": "Table A-0 lists C4.1 Policy Evaluator, C4.2 Policy Registry and C4.3 Decision API; Appendix A reports no C4.4 Obligation Handler.",
+      "operational_source": "Appendix_A_corrected(1).docx, Table A-0",
+      "evidence_origin": "ATAM-derived assessment"
+    },
+    {
+      "id": "B-C6",
+      "component_id": "C6",
+      "conceptual_responsibility": "Enforce need-to-know decisions and applicable masking/filtering obligations before release.",
+      "conceptual_source": "Requirements Appendix B, Section A R7 and Table C R7",
+      "operational_assessment": "Appendix A describes C6.6 as specified but not enforced at gateway instances.",
+      "operational_source": "Appendix_A_corrected(1).docx, Table A-0",
+      "evidence_origin": "ATAM-derived assessment"
+    }
+  ],
+  "variations": [
+    {
+      "id": "C4_star",
+      "base_component": "C4",
+      "source_origin": "ATAM-derived refinement",
+      "source_refs": [
+        "Appendix_A_corrected(1).docx, Table A-11",
+        "Appendix_A_corrected(1).docx, Table A-11.2",
+        "Appendix_A_corrected(1).docx, Table A-13"
+      ],
+      "change": {
+        "type": "add_subcomponent",
+        "subcomponent_id": "C4.4",
+        "name": "Obligation Handler",
+        "responsibility": "Prepare applicable obligations for attachment to the policy decision, including masking and time-bound constraints."
+      },
+      "boundary": "Preparation or attachment at C4 is distinct from applying transformations to released data at C6/C15.",
+      "interface_effect": "Decision response must carry obligations interpretable by the enforcement path; exact payload changes are unspecified.",
+      "state_effect": "No new persistent state owner is established by these refinement descriptions.",
+      "related_atam_gap": "G2"
+    },
+    {
+      "id": "C6_star",
+      "base_component": "C6",
+      "source_origin": "ATAM-derived refinement",
+      "source_refs": [
+        "Appendix_A_corrected(1).docx, Table A-11",
+        "Appendix_A_corrected(1).docx, Table A-11.2",
+        "Appendix_A_corrected(1).docx, Table A-12"
+      ],
+      "change": {
+        "type": "operationalise_specified_capability",
+        "subcomponent_id": "C6.6",
+        "name": "Data Minimizer",
+        "responsibility": "Apply the specified minimisation capability at every gateway instance intercepting relevant requests."
+      },
+      "boundary": "This changes operational availability of a specified responsibility; it does not newly invent baseline masking/filtering intent.",
+      "interface_effect": "Must consume applicable obligations and scope consistently with C4/C15. Exact contracts remain unspecified.",
+      "state_effect": "Request-local decision and enforcement data do not alone establish persistent gateway state.",
+      "related_atam_gap": "G3"
+    }
+  ],
+  "configurations": [
+    {
+      "id": "baseline",
+      "variation_ids": []
+    },
+    {
+      "id": "C4_star_only",
+      "variation_ids": [
+        "C4_star"
+      ]
+    },
+    {
+      "id": "C6_star_only",
+      "variation_ids": [
+        "C6_star"
+      ]
+    },
+    {
+      "id": "C4_C6_star",
+      "variation_ids": [
+        "C4_star",
+        "C6_star"
+      ]
+    }
+  ],
+  "responsibility_checks": [
+    {
+      "id": "R7-C4-PREPARE",
+      "component_id": "C4",
+      "responsibility": "Prepare and return policy decision with applicable obligations.",
+      "required_evidence": "Decision preparation evidence, policy/consent correctness and an interpretable response contract."
+    },
+    {
+      "id": "R7-C6-ENFORCE",
+      "component_id": "C6",
+      "responsibility": "Enforce the decision and every applicable obligation before disclosure.",
+      "required_evidence": "Consumer semantics, transformation evidence and unsupported-obligation handling."
+    },
+    {
+      "id": "R7-C15-SCOPE",
+      "component_id": "C15",
+      "responsibility": "Apply authorized data scope and relevant labels/filters in the modeled access path.",
+      "required_evidence": "Scope interpretation and C6-C15 request/response compatibility."
+    },
+    {
+      "id": "R7-C5-AUDIT",
+      "component_id": "C5",
+      "responsibility": "Record the access decision and enforcement outcome.",
+      "required_evidence": "Audit-event contract and delivery evidence."
+    }
+  ],
+  "state_checks": [
+    {
+      "id": "STATE-POLICY",
+      "information": "Policy definitions",
+      "component_id": "C4",
+      "subcomponent_id": "C4.2",
+      "applicability": "supporting_flow_state",
+      "documented_ownership": "Policy Registry is named; exact storage and consistency rules remain unspecified.",
+      "evidence_refs": [
+        "Appendix_A_corrected(1).docx, Table A-0"
+      ],
+      "boundary": "A registry designation is conceptual evidence, not verified persistence."
+    },
+    {
+      "id": "STATE-CONSENT",
+      "information": "Current consent state",
+      "component_id": "C4",
+      "subcomponent_id": "C4.2",
+      "applicability": "supporting_flow_state",
+      "documented_ownership": "Section A.0 explicitly assigns current consent state to C4.2.",
+      "evidence_refs": [
+        "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
+      ],
+      "boundary": "Do not infer freshness, synchronization or revocation timing from ownership alone."
+    },
+    {
+      "id": "STATE-CREDENTIAL",
+      "information": "Consent credentials and revocation status",
+      "component_id": "C14",
+      "subcomponent_id": "",
+      "applicability": "conditional_on_consent_credential_path",
+      "documented_ownership": "Section A.0 assigns issuance and maintenance to C14.",
+      "evidence_refs": [
+        "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
+      ],
+      "boundary": "C14's involvement is conditional on the selected consent representation."
+    },
+    {
+      "id": "STATE-REQUEST",
+      "information": "Decision and obligations for the current request",
+      "component_id": "C6",
+      "subcomponent_id": "",
+      "applicability": "request_local_context",
+      "documented_ownership": "No persistent owner is asserted.",
+      "evidence_refs": [],
+      "boundary": "Temporary request context does not require persistent sessions or justify classifying the entire gateway as stateful."
+    }
+  ],
+  "assessment_boundaries": [
+    "No coverage change can be inferred merely from adding a named subcomponent.",
+    "C4_star alone does not prove enforcement; C6_star alone does not prove correct obligation preparation.",
+    "Existing reference-model tests consume supplied policy responses and do not test C4's policy evaluation or obligation selection.",
+    "Proposed-contract tests remain separate from historical baseline interface assurance.",
+    "Operational descriptions inherited from Appendix A cannot count as independent reproduction of its ATAM gaps.",
+    "Compatibility and overall coverage require further evidence and may remain undetermined."
+  ]
+}
