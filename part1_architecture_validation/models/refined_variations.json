@@ -192,7 +192,8 @@
     "Operational descriptions inherited from Appendix A cannot count as independent reproduction of its ATAM gaps.",
     "Coverage verdicts are recorded in r7_reference_assessment.json and generated assessment CSVs, not inferred from this file or test counts.",
     "Supplied authorization scope is trusted scenario input. Patient binding, correct scope derivation, consent updates and real-world policy completeness are outside these tests.",
-    "Audit delivery is a supplementary flow responsibility and is not exercised by these ten tests."
+    "Audit delivery is a supplementary flow responsibility and is not exercised by these ten tests.",
+    "The executable comparison uses common proposed contracts across all four configurations; variant availability profiles are assumptions and cannot change historical documentary verdicts."
   ],
   "proposed_logical_rules": {
     "status": "proposed_design; bounded reference-model tests executed; independent review pending",
@@ -261,7 +262,7 @@
     "common_criteria": "r7_reference_assessment.json; use the same applicable criteria and evidence standard for all configurations.",
     "evidence_standard": "Explicit design responsibilities, logical interaction meanings and necessary state ownership support reference-level assessment; names alone do not establish compatibility. Absent documentation remains undetermined, not automatically unsupported.",
     "controlled_differences": "For the four documentary configurations, replace only the sourced C4/C6 variants. Keep the requirement, reference flow and assessment rules fixed.",
-    "proposed_design_boundary": "The ten tests execute one proposed realization, not the four historical/documentary configurations. The code does not separately execute C4.4 or C6.6 as independently implemented subcomponents.",
+    "proposed_design_boundary": "T1-T10 remain tests of one proposed realization. run_r7_variation_experiment.py additionally executes four modeled configurations under two explicit availability profiles using the same shared contract; these are not historical component implementations.",
     "fair_comparison_rule": "Do not attribute better coverage to a refinement when only that configuration receives additional proposed contract detail. A future executable variation comparison must use common contracts, inputs and acceptance expectations, with evidence-backed variant differences.",
     "result_boundary": "Identical or undetermined documentary results are valid. Passing proposed tests does not establish baseline failure, independent ATAM gap discovery or the necessity of either refinement."
   },
@@ -355,5 +356,203 @@
       "Necessity or isolated causal benefit of C4_star or C6_star"
     ],
     "coverage_rule": "No automatic assessment override is made from test outcomes."
+  },
+  "executable_comparison": {
+    "evidence_type": "proposed_assumption_based_realization",
+    "contract_ref": "proposed_logical_rules",
+    "configuration_ids": [
+      "baseline",
+      "C4_star_only",
+      "C6_star_only",
+      "C4_C6_star"
+    ],
+    "common_contract": {
+      "obligations": "Shared mask_fields removal and inclusive filter_date_range semantics; unsupported obligations block disclosure.",
+      "scope": "Trusted explicit allowed_record_ids. C15 applies ID scope and date bounds; C6 applies masking and rechecks dates.",
+      "release": "Only the restricted result is released; no unrestricted source data is merged back."
+    },
+    "profiles": [
+      {
+        "id": "shared_responsibilities",
+        "evidence_type": "proposed_design_assumption",
+        "rationale": "All four configurations realize their documented conceptual preparation and enforcement responsibilities, without requiring a dedicated named handler. This is a robustness case, not historical implementation evidence.",
+        "baseline_preparation_available": true,
+        "baseline_enforcement_available": true
+      },
+      {
+        "id": "atam_informed_availability",
+        "evidence_type": "ATAM_informed_modeling_assumption",
+        "rationale": "Explore unavailable baseline preparation/enforcement informed by Appendix A. Absence of C4.4 alone does not establish inability of C4; these availability flags are explicit assumptions, not independently discovered gaps. Refined mechanisms are assumed available.",
+        "baseline_preparation_available": false,
+        "baseline_enforcement_available": false
+      }
+    ],
+    "unavailable_mechanism_rule": "Block disclosure when an applicable obligation cannot be prepared or enforced. Do not silently omit obligations.",
+    "supplied_decision_cases": "Read the five manually specified enforcement cases from proposed_contracts.json. These assess C6 consumption; they do not assess policy selection.",
+    "additional_selection_cases": [
+      {
+        "id": "R7-V6",
+        "name": "Derived combined obligations with scoped retrieval",
+        "selection_inputs": {
+          "request": {
+            "role": "specialist",
+            "action": "read",
+            "resource": "clinical_records",
+            "purpose": "treatment"
+          },
+          "policy": {
+            "permit_role": "specialist",
+            "permit_action": "read",
+            "permit_purpose": "treatment",
+            "prohibited_fields": [
+              "address"
+            ]
+          },
+          "consent": {
+            "access_permitted": true,
+            "record_date_from": "2026-09-10",
+            "record_date_to": "2026-10-09"
+          }
+        },
+        "scope": {
+          "allowed_record_ids": [
+            "record-1",
+            "record-2"
+          ]
+        },
+        "expected_c4_response": {
+          "decision": "permit",
+          "obligations": [
+            {
+              "action": "mask_fields",
+              "fields": [
+                "address"
+              ]
+            },
+            {
+              "action": "filter_date_range",
+              "field": "record_date",
+              "from": "2026-09-10",
+              "to": "2026-10-09"
+            }
+          ]
+        },
+        "expected_result": {
+          "outcome": "permitted",
+          "released_records": [
+            {
+              "id": "record-2",
+              "record_date": "2026-09-20",
+              "clinical_summary": "Recent synthetic record"
+            }
+          ]
+        }
+      },
+      {
+        "id": "R7-V7",
+        "name": "Missing scope blocks disclosure",
+        "selection_inputs": {
+          "request": {
+            "role": "specialist",
+            "action": "read",
+            "resource": "clinical_records",
+            "purpose": "treatment"
+          },
+          "policy": {
+            "permit_role": "specialist",
+            "permit_action": "read",
+            "permit_purpose": "treatment",
+            "prohibited_fields": [
+              "address"
+            ]
+          },
+          "consent": {
+            "access_permitted": true,
+            "record_date_from": "2026-09-10",
+            "record_date_to": "2026-10-09"
+          }
+        },
+        "scope": {},
+        "expected_c4_response": {
+          "decision": "permit",
+          "obligations": [
+            {
+              "action": "mask_fields",
+              "fields": [
+                "address"
+              ]
+            },
+            {
+              "action": "filter_date_range",
+              "field": "record_date",
+              "from": "2026-09-10",
+              "to": "2026-10-09"
+            }
+          ]
+        },
+        "expected_result": {
+          "outcome": "enforcement_blocked",
+          "released_records": []
+        }
+      },
+      {
+        "id": "R7-V8",
+        "name": "Empty scope releases no records",
+        "selection_inputs": {
+          "request": {
+            "role": "specialist",
+            "action": "read",
+            "resource": "clinical_records",
+            "purpose": "treatment"
+          },
+          "policy": {
+            "permit_role": "specialist",
+            "permit_action": "read",
+            "permit_purpose": "treatment",
+            "prohibited_fields": [
+              "address"
+            ]
+          },
+          "consent": {
+            "access_permitted": true,
+            "record_date_from": "2026-09-10",
+            "record_date_to": "2026-10-09"
+          }
+        },
+        "scope": {
+          "allowed_record_ids": []
+        },
+        "expected_c4_response": {
+          "decision": "permit",
+          "obligations": [
+            {
+              "action": "mask_fields",
+              "fields": [
+                "address"
+              ]
+            },
+            {
+              "action": "filter_date_range",
+              "field": "record_date",
+              "from": "2026-09-10",
+              "to": "2026-10-09"
+            }
+          ]
+        },
+        "expected_result": {
+          "outcome": "permitted",
+          "released_records": []
+        }
+      }
+    ],
+    "oracle_rule": "Use hand-written expected responses/releases; never generate expected values by calling the functions under test.",
+    "held_constant": [
+      "Requirement and acceptance expectations",
+      "Policy, consent, source data and trusted scope",
+      "Shared coordination rules",
+      "C15 retrieval implementation",
+      "Failure rule"
+    ],
+    "result_boundary": "This experiment executes functional models, not independent historical components or DES. It does not update documentary coverage or establish causal necessity. Differences apply only under the chosen availability assumptions."
   }
 }

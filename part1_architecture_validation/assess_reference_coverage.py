@@ -163,7 +163,114 @@ def component_comparison(variations, criterion_rows, summary_rows):
     return table(["Aspect", "C4 baseline", "C4* refined", "C6 baseline", "C6* refined"], rows)
 
 
-def write_report(path, model, variations, configurations, criterion_rows, component_rows, capability_rows, summary_rows, audit_rows, atam_rows):
+def read_experiment_summary(path, variations):
+    """Load separate experimental evidence; never create coverage verdicts."""
+    if not path.exists():
+        return []
+    fields = {
+        'profile', 'configuration', 'cases', 'privacy_protected_cases',
+        'permit_cases', 'complete_permitted_delivery_cases', 'selection_cases',
+        'correct_selection_cases', 'accepted_cases', 'coverage_status',
+        'historical_baseline_coverage', 'evidence_origin', 'profile_rationale',
+    }
+    profiles = {p['id']: p for p in
+                variations.get('executable_comparison', {}).get('profiles', [])}
+    configurations = set(variations.get('executable_comparison', {}).get('configuration_ids', []))
+    with path.open(newline='', encoding='utf-8-sig') as file:
+        reader = csv.DictReader(file)
+        if not fields.issubset(reader.fieldnames or []):
+            raise ValueError('Experiment summary lacks required columns; rerun the updated experiment.')
+        rows = list(reader)
+    if not rows:
+        raise ValueError('Experiment summary is empty; rerun the experiment.')
+    seen = set()
+    for row in rows:
+        pair = row['profile'], row['configuration']
+        if pair in seen or pair[0] not in profiles or pair[1] not in configurations:
+            raise ValueError('Duplicate or unknown experiment profile/configuration.')
+        seen.add(pair)
+        for key in ('cases', 'privacy_protected_cases', 'permit_cases',
+                    'complete_permitted_delivery_cases', 'selection_cases',
+                    'correct_selection_cases', 'accepted_cases'):
+            value = row[key]
+            if not value or not value.isdecimal():
+                raise ValueError('Experiment counts must be nonnegative integers: ' + key)
+            row[key] = int(value)
+        if (row['cases'] < 1 or any(row[k] > row['cases'] for k in
+                ('privacy_protected_cases', 'permit_cases', 'selection_cases', 'accepted_cases'))
+                or row['complete_permitted_delivery_cases'] > row['permit_cases']
+                or row['correct_selection_cases'] > row['selection_cases']):
+            raise ValueError('Experiment counts are inconsistent.')
+        if (row['coverage_status'] != 'not_inferred_from_test_count'
+                or row['historical_baseline_coverage'] != 'undetermined'):
+            raise ValueError('Experiment summary must not assert historical coverage.')
+        profile = profiles[row['profile']]
+        if (row['evidence_origin'] != profile['evidence_type']
+                or row['profile_rationale'] != profile['rationale']):
+            raise ValueError('Experiment profile metadata differs from JSON; rerun the experiment.')
+    for profile_id in {r['profile'] for r in rows}:
+        group = [r for r in rows if r['profile'] == profile_id]
+        if {r['configuration'] for r in group} != configurations:
+            raise ValueError('An experiment profile is missing a configuration.')
+    if len({(r['cases'], r['permit_cases'], r['selection_cases']) for r in rows}) != 1:
+        raise ValueError('Experiment configurations do not use equal case counts.')
+    return rows
+
+
+def experiment_section(rows, source_path):
+    lines = ['## R7 executable variation comparison', '']
+    if not rows:
+        return lines + [
+            'No experiment summary was found. Run run_r7_variation_experiment.py before '
+            'regenerating this report. Documentary coverage is unaffected.', '']
+    lines += [
+        'Source: ' + cell(source_path.name) + '. The figures below are read from the saved CSV; '
+        'this report generator does not execute the experiment. Regenerate experimental '
+        'results after changing model or runner inputs.', '',
+        table(['Profile', 'Configuration', 'Accepted cases', 'Complete permitted delivery',
+               'Correct C4 selection', 'Privacy protected'], [
+            [r['profile'], r['configuration'],
+             f"{r['accepted_cases']}/{r['cases']}",
+             f"{r['complete_permitted_delivery_cases']}/{r['permit_cases']}",
+             f"{r['correct_selection_cases']}/{r['selection_cases']}",
+             f"{r['privacy_protected_cases']}/{r['cases']}" ] for r in rows]), '',
+        'C4 selection is assessed only in the policy/consent-derived cases; supplied-decision '
+        'cases do not assess selection. Accepted cases satisfy the selected response expectations '
+        'and, where applicable, selection expectations. Privacy protection alone does not imply '
+        'correct permitted delivery: blocked authorized requests remain incomplete delivery.', '',
+    ]
+    for profile_id in dict.fromkeys(r['profile'] for r in rows):
+        group = [r for r in rows if r['profile'] == profile_id]
+        lines += [f'### {cell(profile_id)}', '', cell(group[0]['profile_rationale']), '']
+        if all(r['accepted_cases'] == r['cases'] for r in group):
+            lines += ['All four modeled configurations meet the selected case expectations '
+                      'under this profile. These cases demonstrate no functional advantage '
+                      'for the combined refinement under these assumptions.', '']
+        else:
+            combined = next(r for r in group if r['configuration'] == 'C4_C6_star')
+            if combined['accepted_cases'] == combined['cases']:
+                lines += ['The combined configuration meets every selected case expectation; '
+                          'at least one other configuration does not. The difference is conditional '
+                          'on this profile’s availability assumptions.', '']
+            else:
+                lines += ['The combined configuration also fails at least one selected case. '
+                          'Review the detailed experiment CSV before claiming modeled fulfillment.', '']
+    lines += [
+        'All configurations reuse the same functional helpers when mechanisms are available. '
+        'The shared-responsibility profile is therefore a consistency/robustness check, '
+        'not evidence from four independently implemented architectures.', '',
+        'The availability profile explores ATAM-informed assumptions. Absence of a named '
+        'subcomponent does not independently prove a baseline capability is unavailable. '
+        'The comparison measures consequences of those assumptions; it does not discover '
+        'historical baseline gaps, independently confirm ATAM, or update documentary verdicts.', '',
+        'This is a bounded functional experiment, not DES or a performance measurement. '
+        'Trusted scope and fixed policy/consent are inputs; audit delivery, patient binding '
+        'and consent updates are outside the executable cases.', '',
+    ]
+    return lines
+
+
+def write_report(path, model, variations, configurations, criterion_rows, component_rows, capability_rows, summary_rows, audit_rows, atam_rows, experiment_rows, experiment_path):
     lines = [
         '# R7 reference-architecture assessment', '',
         'This report assesses the conceptual reference architecture using explicit criterion reviews. '
@@ -197,7 +304,6 @@ def write_report(path, model, variations, configurations, criterion_rows, compon
         table(['Configuration', 'Component', 'Contribution coverage', 'Unresolved checks'],
               [[r['configuration'], r['component'], r['contribution_coverage'], r['unresolved_checks']]
                for r in component_rows]), '',
-        '## Reviewed criteria and evidence', ''
     ]
     if audit_rows:
         lines += ['## Supporting audit completeness', '',
@@ -210,6 +316,8 @@ def write_report(path, model, variations, configurations, criterion_rows, compon
                   'This supplied interpretation is not independently reproduced gap evidence.', '',
                   table(['ATAM gap', 'Interpretation'],
                         [[r['gap'], r['interpretation']] for r in atam_rows]), '']
+    lines += experiment_section(experiment_rows, experiment_path)
+    lines += ['## Reviewed criteria and evidence', '']
     for configuration in configurations:
         lines += [f'### {cell(configuration)}', '',
                   table(['Check', 'Kind', 'Verdict', 'Review origin', 'Rationale', 'Review evidence', 'Open questions'],
@@ -225,7 +333,7 @@ def write_report(path, model, variations, configurations, criterion_rows, compon
     path.write_text('\n'.join(lines), encoding='utf-8')
 
 
-def run(models, results):
+def run(models, results, experiment_summary=None):
     model = read_json(models / 'r7_reference_assessment.json')
     variations = read_json(models / 'refined_variations.json')
     if not isinstance(model, dict) or not isinstance(variations, dict):
@@ -346,6 +454,10 @@ def run(models, results):
             })
         print(f"{configuration} [{evidence_type}]: {row['coverage']} ({row['supported_checks']} supported, "
               f"{row['unsupported_checks']} unsupported, {row['unresolved_checks']} unresolved)")
+    experiment_path = experiment_summary if experiment_summary is not None else results / 'r7_variation_experiment_summary.csv'
+    if experiment_summary is not None and not experiment_path.is_file():
+        raise ValueError('Explicit experiment summary file does not exist.')
+    experiment_rows = read_experiment_summary(experiment_path, variations)
     results.mkdir(parents=True, exist_ok=True)
     for name, rows in (
         ('reference_criterion_assessment.csv', criterion_rows),
@@ -359,7 +471,7 @@ def run(models, results):
     if atam_rows:
         write(results / 'atam_comparison.csv', atam_rows)
     write_report(results / 'r7_reference_architecture_report.md', model, variations, configurations,
-                 criterion_rows, component_rows, capability_rows, summary_rows, audit_rows, atam_rows)
+                 criterion_rows, component_rows, capability_rows, summary_rows, audit_rows, atam_rows, experiment_rows, experiment_path)
     print('Coverage is computed from explicit criterion reviews; source truth is not automatically verified.')
     print(f'Results written to: {results}')
 
@@ -369,9 +481,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--models-directory', type=Path, default=directory / 'models')
     parser.add_argument('--results-directory', type=Path, default=directory / 'results')
+    parser.add_argument('--experiment-summary', type=Path,
+                        help='Optional summary CSV; defaults to the results directory summary when present.')
     args = parser.parse_args()
     try:
-        run(args.models_directory, args.results_directory)
+        run(args.models_directory, args.results_directory, args.experiment_summary)
         return 0
     except (ValueError, OSError, KeyError, TypeError) as error:
         print(f'Reference assessment stopped: {error}', file=sys.stderr)
