@@ -168,7 +168,8 @@
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
       ],
-      "boundary": "C14 is relevant only when using the credential path."
+      "boundary": "C14 is relevant only when using the credential path.",
+      "subcomponent_id": ""
     },
     {
       "id": "STATE-REQUEST",
@@ -177,7 +178,8 @@
       "applicability": "request_local_context",
       "documented_ownership": "No persistent owner is claimed.",
       "evidence_refs": [],
-      "boundary": "A temporary request does not require a stored session."
+      "boundary": "A temporary request does not require a stored session.",
+      "subcomponent_id": ""
     }
   ],
   "assessment_boundaries": [
