@@ -1,30 +1,29 @@
 {
   "schema_version": "1.0",
   "scope": "R7",
-  "purpose": "Source-backed C4/C6 variation descriptions, a common comparison standard, and explicit proposed R7 rules linked to executable tests. Test expectations do not prescribe documentary coverage verdicts.",
+  "purpose": "Describe the R7 baseline and C4*/C6* changes, plus proposed examples and comparisons.",
   "source_boundaries": [
-    "Appendix B describes conceptual baseline responsibilities.",
-    "Appendix A reports ATAM-derived operational findings and proposed refinements. Those findings are not independent baseline observations.",
-    "Descriptions here do not overwrite baseline_components.json or establish implementation support."
+    "Appendix B describes component roles. Appendix A supplies ATAM-based findings and refinements.",
+    "These descriptions and model tests do not prove what historical software implemented."
   ],
   "baseline_evidence": [
     {
       "id": "B-C4",
       "component_id": "C4",
-      "conceptual_responsibility": "Evaluate policy and return a decision with applicable obligations.",
+      "conceptual_responsibility": "C4 decides access and sends any restrictions.",
       "conceptual_source": "Requirements Appendix B, Section A R7 and Table C R7",
-      "operational_assessment": "Table A-0 lists C4.1 Policy Evaluator, C4.2 Policy Registry and C4.3 Decision API; Appendix A reports no C4.4 Obligation Handler.",
+      "operational_assessment": "Appendix A lists C4.1-C4.3, but not a named C4.4 Obligation Handler.",
       "operational_source": "Appendix_A_corrected(1).docx, Table A-0",
-      "evidence_origin": "ATAM-derived assessment"
+      "evidence_origin": "ATAM-derived, not independently verified"
     },
     {
       "id": "B-C6",
       "component_id": "C6",
-      "conceptual_responsibility": "Enforce need-to-know decisions and applicable masking/filtering obligations before release.",
+      "conceptual_responsibility": "C6 checks access and applies restrictions before releasing records.",
       "conceptual_source": "Requirements Appendix B, Section A R7 and Table C R7",
-      "operational_assessment": "Appendix A describes C6.6 as specified but not enforced at gateway instances.",
+      "operational_assessment": "Appendix A reports C6.6 specified but not active at every gateway.",
       "operational_source": "Appendix_A_corrected(1).docx, Table A-0",
-      "evidence_origin": "ATAM-derived assessment"
+      "evidence_origin": "ATAM-derived, not independently verified"
     }
   ],
   "variations": [
@@ -41,11 +40,11 @@
         "type": "add_subcomponent",
         "subcomponent_id": "C4.4",
         "name": "Obligation Handler",
-        "responsibility": "Prepare applicable obligations for attachment to the policy decision, including masking and time-bound constraints."
+        "responsibility": "Prepare restrictions to send with the C4 access decision."
       },
-      "boundary": "Preparation or attachment at C4 is distinct from applying transformations to released data at C6/C15.",
-      "interface_effect": "Decision response must carry obligations interpretable by the enforcement path; exact payload changes are unspecified.",
-      "state_effect": "No new persistent state owner is established by these refinement descriptions.",
+      "boundary": "Preparing restrictions is not the same as applying them.",
+      "interface_effect": "C6 must understand the restrictions C4 sends; exact API is not specified.",
+      "state_effect": "No new persistent state owner is established.",
       "related_atam_gap": "G2"
     },
     {
@@ -61,11 +60,11 @@
         "type": "operationalise_specified_capability",
         "subcomponent_id": "C6.6",
         "name": "Data Minimizer",
-        "responsibility": "Apply the specified minimisation capability at every gateway instance intercepting relevant requests."
+        "responsibility": "Make data-minimization enforcement available at each C6 gateway."
       },
-      "boundary": "This changes operational availability of a specified responsibility; it does not newly invent baseline masking/filtering intent.",
-      "interface_effect": "Must consume applicable obligations and scope consistently with C4/C15. Exact contracts remain unspecified.",
-      "state_effect": "Request-local decision and enforcement data do not alone establish persistent gateway state.",
+      "boundary": "The baseline already describes masking and filtering as C6 duties.",
+      "interface_effect": "C6 must understand restrictions and scope from C4/C15.",
+      "state_effect": "This request does not imply persistent session state.",
       "related_atam_gap": "G3"
     }
   ],
@@ -105,7 +104,7 @@
       ],
       "evidence_type": "proposed_design",
       "logical_rules_ref": "proposed_logical_rules",
-      "boundary": "ATAM-derived component variations with additional analyst-proposed logical rules. Not historical baseline evidence or confirmed coverage.",
+      "boundary": "Extra proposed rules, not evidence of historical baseline behaviour.",
       "selection_example_ref": "proposed_selection_example"
     }
   ],
@@ -113,26 +112,26 @@
     {
       "id": "R7-C4-PREPARE",
       "component_id": "C4",
-      "responsibility": "Prepare and return policy decision with applicable obligations.",
-      "required_evidence": "Decision preparation evidence, policy/consent correctness and an interpretable response contract."
+      "responsibility": "C4 returns allow/deny and any restrictions.",
+      "required_evidence": "Evidence about decision and restriction selection."
     },
     {
       "id": "R7-C6-ENFORCE",
       "component_id": "C6",
-      "responsibility": "Enforce the decision and every applicable obligation before disclosure.",
-      "required_evidence": "Consumer semantics, transformation evidence and unsupported-obligation handling."
+      "responsibility": "C6 applies the decision and all restrictions before release.",
+      "required_evidence": "Evidence about enforcement and failure handling."
     },
     {
       "id": "R7-C15-SCOPE",
       "component_id": "C15",
-      "responsibility": "Apply authorized data scope and relevant labels/filters in the modeled access path.",
-      "required_evidence": "Scope interpretation and C6-C15 request/response compatibility."
+      "responsibility": "C15 limits which records are retrieved.",
+      "required_evidence": "Evidence about scope and C6/C15 agreement."
     },
     {
       "id": "R7-C5-AUDIT",
       "component_id": "C5",
-      "responsibility": "Record the access decision and enforcement outcome.",
-      "required_evidence": "Audit-event contract and delivery evidence."
+      "responsibility": "C5 records access and enforcement results.",
+      "required_evidence": "Evidence about audit messages and logging."
     }
   ],
   "state_checks": [
@@ -142,11 +141,11 @@
       "component_id": "C4",
       "subcomponent_id": "C4.2",
       "applicability": "supporting_flow_state",
-      "documented_ownership": "Policy Registry is named; exact storage and consistency rules remain unspecified.",
+      "documented_ownership": "C4.2 is the named policy registry.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Table A-0"
       ],
-      "boundary": "A registry designation is conceptual evidence, not verified persistence."
+      "boundary": "Actual storage and consistency are not tested."
     },
     {
       "id": "STATE-CONSENT",
@@ -154,59 +153,50 @@
       "component_id": "C4",
       "subcomponent_id": "C4.2",
       "applicability": "supporting_flow_state",
-      "documented_ownership": "Section A.0 explicitly assigns current consent state to C4.2.",
+      "documented_ownership": "C4.2 holds current consent.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
       ],
-      "boundary": "Do not infer freshness, synchronization or revocation timing from ownership alone."
+      "boundary": "Consent synchronization is not tested."
     },
     {
       "id": "STATE-CREDENTIAL",
       "information": "Consent credentials and revocation status",
       "component_id": "C14",
-      "subcomponent_id": "",
       "applicability": "conditional_on_consent_credential_path",
-      "documented_ownership": "Section A.0 assigns issuance and maintenance to C14.",
+      "documented_ownership": "C14 manages consent credentials and status.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
       ],
-      "boundary": "C14's involvement is conditional on the selected consent representation."
+      "boundary": "C14 is relevant only when using the credential path."
     },
     {
       "id": "STATE-REQUEST",
       "information": "Decision and obligations for the current request",
       "component_id": "C6",
-      "subcomponent_id": "",
       "applicability": "request_local_context",
-      "documented_ownership": "No persistent owner is asserted.",
+      "documented_ownership": "No persistent owner is claimed.",
       "evidence_refs": [],
-      "boundary": "Temporary request context does not require persistent sessions or justify classifying the entire gateway as stateful."
+      "boundary": "A temporary request does not require a stored session."
     }
   ],
   "assessment_boundaries": [
-    "No coverage change can be inferred merely from adding a named subcomponent.",
-    "C4_star alone does not prove enforcement; C6_star alone does not prove correct obligation preparation.",
-    "T1-T5 test C6 enforcement of supplied decisions. T6 additionally derives one C4 response from fixed proposed policy and consent inputs.",
-    "T7-T10 execute proposed C15 scoped retrieval followed by C6 enforcement; they do not call a real FHIR server or independently implemented services.",
-    "Proposed-contract tests remain separate from historical baseline interface assurance.",
-    "Operational descriptions inherited from Appendix A cannot count as independent reproduction of its ATAM gaps.",
-    "Coverage verdicts are recorded in r7_reference_assessment.json and generated assessment CSVs, not inferred from this file or test counts.",
-    "Supplied authorization scope is trusted scenario input. Patient binding, correct scope derivation, consent updates and real-world policy completeness are outside these tests.",
-    "Audit delivery is a supplementary flow responsibility and is not exercised by these ten tests.",
-    "The executable comparison uses common proposed contracts across all four configurations; variant availability profiles are assumptions and cannot change historical documentary verdicts."
+    "A named new subcomponent does not alone prove that the baseline failed.",
+    "C4* prepares restrictions; C6* enforces them. Both still need compatible meanings.",
+    "T1-T10 and the variation experiment run proposed examples, not real historical services.",
+    "The authorization scope is assumed correct; no real FHIR, audit delivery or performance is tested.",
+    "Coverage decisions are made separately in r7_reference_assessment.json."
   ],
   "proposed_logical_rules": {
-    "status": "proposed_design; bounded reference-model tests executed; independent review pending",
-    "I2-RESPONSE": "For the fixed example, C4 derives masking from prohibited_fields and inclusive record-date bounds from consent. C6 accepts the agreed mask_fields and filter_date_range representations, applies all supplied obligations, and blocks disclosure on invalid or unsupported obligations. This is not a general policy engine.",
-    "I3-SCOPE": "In the proposed flat-record model, scope is an explicit allowed_record_ids list supplied to C6 and passed to C15. C15 returns only allowed IDs within all supplied inclusive date bounds. C6 applies field masking and rechecks all date obligations. Missing or invalid scope blocks disclosure; an empty scope returns no records. The correctness of the supplied allow-list is an assumption.",
-    "I4-DATA": "C6 releases only the transformed result derived from C15 retrieval. Filtering precedes masking, and no subsequent assembly merges original records or restores fields. Enforcement failure releases no partial result. This rule covers the modeled flat records and actions, not arbitrary FHIR transformations.",
-    "boundary": "These rules are proposed. The runner explicitly implements them and compares results with independently written expected outputs. Passing cases support the bounded model, not historical services, every possible input, or ATAM refinements alone."
+    "status": "Proposed model only; independent review pending.",
+    "I2-RESPONSE": "C4 sends restrictions. C6 applies all, or blocks release if invalid or unsupported.",
+    "I3-SCOPE": "C15 filters allowed IDs and dates. C6 then enforces masking. Supplied scope is trusted.",
+    "I4-DATA": "Only the filtered and masked result is released. Never release partial results.",
+    "boundary": "The tests use flat example records, not real FHIR systems or baseline implementations."
   },
   "proposed_selection_example": {
     "id": "EXAMPLE-R7-POLICY-CONSENT-1",
-    "status": "proposed_example; T6 execution reported PASS and reproducible with the test runner; independent review pending",
     "configuration": "R7_proposed_logical_design",
-    "purpose": "Separate C4 obligation selection from C6 enforcement of supplied obligations.",
     "request": {
       "role": "specialist",
       "action": "read",
@@ -243,119 +233,35 @@
         }
       ]
     },
-    "expected_c6_result": "Using the synthetic records in proposed_contracts.json, return only record-2 with its address removed.",
-    "reasoning": [
-      "Policy allows this role, action and purpose; the fixed consent permits access.",
-      "Policy prohibits address disclosure, so C4 must select address masking.",
-      "Consent limits the record dates, so C4 must select the stated inclusive date filter.",
-      "C6 must apply both restrictions before releasing data."
-    ],
-    "evidence_boundary": "Policy values, consent values and action representation are analyst-proposed scenario inputs. Expected results are hand-derived acceptance expectations, not observed execution results or baseline facts.",
-    "existing_test_link": "T5 checks combined enforcement of supplied obligations. T6 derives a C4 response from the fixed policy and consent, compares it with expected_c4_response, and checks C6 delivery against the hand-written T5 expectation.",
-    "execution_evidence_refs": [
-      "results/proposed_selection_test_results.csv, R7-T6"
-    ],
-    "remaining_boundary": "One fixed selection example does not establish general policy correctness or authorization-scope derivation."
+    "evidence_boundary": "A fixed example, not proof of general policy or consent correctness."
   },
   "comparison_policy": {
-    "scope": "R7 decision and disclosure-obligation enforcement for one authenticated request with fixed policy and consent.",
-    "common_criteria": "r7_reference_assessment.json; use the same applicable criteria and evidence standard for all configurations.",
-    "evidence_standard": "Explicit design responsibilities, logical interaction meanings and necessary state ownership support reference-level assessment; names alone do not establish compatibility. Absent documentation remains undetermined, not automatically unsupported.",
-    "controlled_differences": "For the four documentary configurations, replace only the sourced C4/C6 variants. Keep the requirement, reference flow and assessment rules fixed.",
-    "proposed_design_boundary": "T1-T10 remain tests of one proposed realization. run_r7_variation_experiment.py additionally executes four modeled configurations under two explicit availability profiles using the same shared contract; these are not historical component implementations.",
-    "fair_comparison_rule": "Do not attribute better coverage to a refinement when only that configuration receives additional proposed contract detail. A future executable variation comparison must use common contracts, inputs and acceptance expectations, with evidence-backed variant differences.",
-    "result_boundary": "Identical or undetermined documentary results are valid. Passing proposed tests does not establish baseline failure, independent ATAM gap discovery or the necessity of either refinement."
+    "scope": "One authenticated R7 request with fixed policy and consent.",
+    "common_criteria": "Use the same R7 checks for all four variants.",
+    "controlled_differences": "Change only the documented C4* and C6* designs.",
+    "fair_comparison_rule": "Use the same inputs, rules and expected results; proposed rules must not favor one design.",
+    "result_boundary": "Model results depend on assumptions and do not prove historical baseline gaps."
   },
   "proposed_retrieval_example": {
     "id": "EXAMPLE-R7-SCOPED-RETRIEVAL-1",
     "configuration": "R7_proposed_logical_design",
     "evidence_type": "proposed_design",
-    "implementation_refs": [
-      "test_proposed_contracts.py, retrieve_scoped_records",
-      "test_proposed_contracts.py, enforce_with_retrieval",
-      "test_proposed_contracts.py, run_retrieval_examples"
-    ],
-    "scope_contract": {
-      "required_key": "allowed_record_ids",
-      "meaning": "Unique nonempty record-ID strings in an explicit array; an empty array authorizes no records. Missing or malformed scope blocks disclosure."
-    },
-    "fixture_scope": {
-      "allowed_record_ids": [
-        "record-1",
-        "record-2"
-      ]
-    },
     "extra_source_record": {
       "id": "record-other",
       "record_date": "2026-09-20",
       "address": "Excluded synthetic address",
       "clinical_summary": "Out of scope"
     },
-    "extra_record_purpose": "A record inside the permitted date range but outside the ID scope must not be retrieved or released.",
     "allocation": {
-      "C15": "Apply the supplied ID allow-list and inclusive date filters.",
-      "C6": "Validate the decision before retrieval; deny without calling C15; enforce masking and recheck date restrictions on retrieved records before release."
+      "C15": "Restrict records by allowed IDs and dates.",
+      "C6": "Deny before retrieval; mask fields before release."
     },
-    "expected_retrieved_records": [
-      {
-        "id": "record-2",
-        "record_date": "2026-09-20",
-        "address": "Synthetic address B",
-        "clinical_summary": "Recent synthetic record"
-      }
-    ],
-    "expected_released_records": [
-      {
-        "id": "record-2",
-        "record_date": "2026-09-20",
-        "clinical_summary": "Recent synthetic record"
-      }
-    ],
-    "boundary": "These are proposed test expectations. The runner currently defines the I3 cases explicitly in Python; this descriptive entry is not an automatically interpreted test specification."
+    "boundary": "Example only; not a real FHIR service."
   },
   "test_evidence": {
     "runner": "test_proposed_contracts.py",
-    "reported_execution": "The user reported PASS for T1-T10. Current results must be regenerated after code or model changes.",
-    "cases": [
-      {
-        "ids": [
-          "R7-T1",
-          "R7-T2",
-          "R7-T3",
-          "R7-T4",
-          "R7-T5"
-        ],
-        "checks": "Deny, field removal, date filtering, unsupported obligation and combined enforcement.",
-        "output": "results/proposed_contract_test_results.csv"
-      },
-      {
-        "ids": [
-          "R7-T6"
-        ],
-        "checks": "Derive one C4 response from policy/consent, then enforce with C6.",
-        "output": "results/proposed_selection_test_results.csv"
-      },
-      {
-        "ids": [
-          "R7-T7",
-          "R7-T8",
-          "R7-T9",
-          "R7-T10"
-        ],
-        "checks": "C15 ID/date restriction and C6 masking; deny before retrieval; missing scope; empty scope.",
-        "output": "results/proposed_retrieval_test_results.csv"
-      }
-    ],
-    "not_established": [
-      "Historical baseline capability absence",
-      "Independent producer/consumer implementation compatibility",
-      "General policy or consent correctness",
-      "Correct patient binding or scope derivation",
-      "Audit delivery",
-      "Performance, queueing or DES timing",
-      "Necessity or isolated causal benefit of C4_star or C6_star"
-    ],
-    "coverage_rule": "No automatic assessment override is made from test outcomes."
+    "cases": "T1-T5 test supplied decisions; T6 tests selection; T7-T10 test scope and retrieval.",
+    "boundary": "Test results do not establish historical coverage or general correctness."
   },
   "executable_comparison": {
     "evidence_type": "proposed_assumption_based_realization",
@@ -367,32 +273,32 @@
       "C4_C6_star"
     ],
     "common_contract": {
-      "obligations": "Shared mask_fields removal and inclusive filter_date_range semantics; unsupported obligations block disclosure.",
-      "scope": "Trusted explicit allowed_record_ids. C15 applies ID scope and date bounds; C6 applies masking and rechecks dates.",
-      "release": "Only the restricted result is released; no unrestricted source data is merged back."
+      "obligations": "Apply all masking and date restrictions; unsupported rules block release.",
+      "scope": "C15 limits IDs/dates; C6 masks and rechecks dates.",
+      "release": "Release only restricted records."
     },
     "profiles": [
       {
         "id": "shared_responsibilities",
         "evidence_type": "proposed_design_assumption",
-        "rationale": "All four configurations realize their documented conceptual preparation and enforcement responsibilities, without requiring a dedicated named handler. This is a robustness case, not historical implementation evidence.",
+        "rationale": "Assume all four configurations can prepare and enforce restrictions.",
         "baseline_preparation_available": true,
         "baseline_enforcement_available": true
       },
       {
         "id": "atam_informed_availability",
         "evidence_type": "ATAM_informed_modeling_assumption",
-        "rationale": "Explore unavailable baseline preparation/enforcement informed by Appendix A. Absence of C4.4 alone does not establish inability of C4; these availability flags are explicit assumptions, not independently discovered gaps. Refined mechanisms are assumed available.",
+        "rationale": "Assume baseline preparation and enforcement are unavailable, based on ATAM concerns. This is not proven.",
         "baseline_preparation_available": false,
         "baseline_enforcement_available": false
       }
     ],
-    "unavailable_mechanism_rule": "Block disclosure when an applicable obligation cannot be prepared or enforced. Do not silently omit obligations.",
-    "supplied_decision_cases": "Read the five manually specified enforcement cases from proposed_contracts.json. These assess C6 consumption; they do not assess policy selection.",
+    "unavailable_mechanism_rule": "Block disclosure if a required restriction cannot be prepared or enforced.",
+    "supplied_decision_cases": "Read T1-T5 from proposed_contracts.json.",
     "additional_selection_cases": [
       {
         "id": "R7-V6",
-        "name": "Derived combined obligations with scoped retrieval",
+        "name": "Apply both restrictions to allowed records",
         "selection_inputs": {
           "request": {
             "role": "specialist",
@@ -450,7 +356,7 @@
       },
       {
         "id": "R7-V7",
-        "name": "Missing scope blocks disclosure",
+        "name": "Block access if scope is missing",
         "selection_inputs": {
           "request": {
             "role": "specialist",
@@ -497,7 +403,7 @@
       },
       {
         "id": "R7-V8",
-        "name": "Empty scope releases no records",
+        "name": "Return no records when scope is empty",
         "selection_inputs": {
           "request": {
             "role": "specialist",
@@ -545,14 +451,11 @@
         }
       }
     ],
-    "oracle_rule": "Use hand-written expected responses/releases; never generate expected values by calling the functions under test.",
+    "oracle_rule": "Compare results with manually written expected outcomes.",
     "held_constant": [
-      "Requirement and acceptance expectations",
-      "Policy, consent, source data and trusted scope",
-      "Shared coordination rules",
-      "C15 retrieval implementation",
-      "Failure rule"
+      "R7 requirements and example inputs",
+      "Shared rules and expected outputs"
     ],
-    "result_boundary": "This experiment executes functional models, not independent historical components or DES. It does not update documentary coverage or establish causal necessity. Differences apply only under the chosen availability assumptions."
+    "result_boundary": "Functional, assumption-based comparison only; not historical evidence or DES."
   }
 }
