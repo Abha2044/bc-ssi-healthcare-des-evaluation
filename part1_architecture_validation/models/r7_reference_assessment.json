@@ -15,8 +15,7 @@
       "Persistent sessions",
       "Real APIs and implementations",
       "Performance"
-    ],
-    "review_status": "Preliminary document review; independent review pending."
+    ]
   },
   "rules": {
     "supported": "The sources support this role or interaction.",
