@@ -2,31 +2,30 @@
   "schema_version": "1.0",
   "requirement_id": "R7",
   "assessment_target": "conceptual_reference_architecture",
-  "purpose": "Check how C4, C6 and C15 contribute to R7. Report audit separately.",
+  "purpose": "Check R7 component roles, connections and state. Assess audit separately.",
   "assessment_scope": {
-    "unit": "One authenticated request using fixed policy and current-consent snapshots.",
-    "consent": "C4.2 holds current consent; C14 credential issuance and consent updates are outside this pilot.",
+    "unit": "One authenticated request with fixed policy and consent.",
+    "consent": "C4.2 holds current consent. C14 and consent changes are out of scope.",
     "preconditions": [
-      "Authentication and patient-record binding are already established.",
-      "Policy and consent remain fixed during the request."
+      "Authentication and patient binding are assumed correct.",
+      "Policy and consent do not change during the request."
     ],
     "excluded": [
       "Consent updates",
       "Persistent sessions",
-      "Production API formats",
-      "Implementation correctness",
+      "Real APIs and implementations",
       "Performance"
     ],
-    "review_status": "Preliminary documentary review; independent review pending."
+    "review_status": "Preliminary document review; independent review pending."
   },
   "rules": {
-    "supported": "Evidence supports the stated responsibility or logical interaction.",
-    "unsupported": "Evidence establishes a deficiency; missing documentation alone is insufficient.",
-    "undetermined": "Relevant evidence is insufficient.",
-    "not_applicable": "The selected scope excludes this check; justification is required.",
-    "coverage": "Full: all applicable mandatory checks supported. Partial: supported and unsupported checks, none unresolved. None: all unsupported. Otherwise: undetermined.",
-    "variations": "Use the same criteria across configurations. Overrides require configuration-specific evidence; proposed rules are not automatically supported.",
-    "proposals": "Proposed rules and test passes do not establish historical baseline facts."
+    "supported": "The sources support this role or interaction.",
+    "unsupported": "Evidence shows the stated role or interaction is missing.",
+    "undetermined": "The sources do not establish the answer.",
+    "not_applicable": "Outside the selected case; give a reason.",
+    "coverage": "Full if all applicable required checks are supported. Undetermined if a required check is unclear. Otherwise partial or none as appropriate.",
+    "variations": "Use the same checks for every configuration; overrides need evidence.",
+    "proposals": "Proposed test results are not historical baseline facts."
   },
   "checks": [
     {
@@ -35,7 +34,7 @@
       "components": [
         "C4"
       ],
-      "criterion": "Produce a permit/deny decision from subject/resource/action/purpose and consent constraints.",
+      "criterion": "C4 decides whether access is allowed.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -44,13 +43,12 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Section A R7 explicitly assigns policy evaluation using validated claims and consent constraints to the PDP, with permit/deny output. This supports the documented logical responsibility, not policy implementation correctness.",
+        "rationale": "Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code.",
         "supporting_evidence_refs": [
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "C4-OBLIGATIONS",
@@ -58,7 +56,7 @@
       "components": [
         "C4"
       ],
-      "criterion": "Assign C4 responsibility for returning a policy decision with applicable disclosure obligations.",
+      "criterion": "C4 returns the decision and required restrictions.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -67,7 +65,7 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Appendix B explicitly assigns decision-plus-obligation output to the PDP. This supports the conceptual responsibility; completeness of obligation selection and interpretation is not proved by the examples.",
+        "rationale": "Appendix B says C4 returns obligations with its decision. It does not prove every rule is selected correctly.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
@@ -77,7 +75,7 @@
         "C4_star_only": {
           "verdict": "supported",
           "assessed_by": "Assistant documentary review; independent review pending",
-          "rationale": "The selected C4* variation adds C4.4 as the named obligation-handling subcomponent. Appendix A Table A-13 describes attaching masking and time-bound constraints to the decision. This makes the allocation more explicit; it does not independently establish exhaustive selection or C6 interpretation.",
+          "rationale": "C4* adds the named C4.4 handler. That clarifies who prepares restrictions, not whether C6 understands them.",
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
@@ -86,7 +84,7 @@
         "C4_C6_star": {
           "verdict": "supported",
           "assessed_by": "Assistant documentary review; independent review pending",
-          "rationale": "The selected C4* variation adds C4.4 as the named obligation-handling subcomponent. Appendix A Table A-13 describes attaching masking and time-bound constraints to the decision. This makes the allocation more explicit; it does not independently establish exhaustive selection or C6 interpretation.",
+          "rationale": "C4* adds the named C4.4 handler. Shared meaning with C6 is still open.",
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
@@ -95,7 +93,7 @@
         "R7_proposed_logical_design": {
           "verdict": "supported",
           "assessed_by": "Assistant proposed logical-design review; independent review pending",
-          "rationale": "C4 has the documented responsibility to prepare and return applicable obligations. In the bounded proposed realization, derive_policy_response selects address masking from the fixed policy and inclusive date bounds from the fixed consent. T6 compares that output with a hand-written expected response. This supports the selected example, not general policy completeness or historical implementation correctness.",
+          "rationale": "A fixed proposed policy and consent example produces the expected restrictions (T6). This is not a complete policy engine.",
           "supporting_evidence_refs": [
             "Requirements Appendix B, Section A R7 and Table C R7",
             "refined_variations.json, proposed_selection_example",
@@ -104,12 +102,6 @@
           ],
           "open_questions": []
         }
-      },
-      "selection_follow_up": {
-        "example_ref": "refined_variations.json, proposed_selection_example",
-        "question": "Does C4 derive the expected mask and date-filter obligations from the fixed policy and consent?",
-        "status": "not_executed",
-        "assessment_boundary": "The current supported verdict concerns documented responsibility for returning obligations. It does not establish correct selection; this follow-up is not automatically scored by the assessment script."
       }
     },
     {
@@ -118,7 +110,7 @@
       "components": [
         "C6"
       ],
-      "criterion": "Allow or deny disclosure according to the decision.",
+      "criterion": "C6 follows the allow or deny decision.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -127,13 +119,12 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Section A R7 describes scoped access on permission and a 403 denial path. This supports the conceptual decision-enforcement responsibility.",
+        "rationale": "Appendix B describes permitted access and denial through C6.",
         "supporting_evidence_refs": [
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "C6-OBLIGATIONS",
@@ -141,7 +132,7 @@
       "components": [
         "C6"
       ],
-      "criterion": "Assign C6 responsibility for applying applicable masking/filtering obligations before release.",
+      "criterion": "C6 applies masking and filtering before release.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -150,7 +141,7 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Table C explicitly assigns mask/filter enforcement to C6, and Section A places scoped access and filtered release after the decision. The assigned responsibility is supported; exhaustive enforcement and failure semantics are assessed separately in I2-RESPONSE and I4-DATA.",
+        "rationale": "Appendix B assigns masking and filtering to C6. Full execution is assessed separately.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
@@ -160,7 +151,7 @@
         "C6_star_only": {
           "verdict": "supported",
           "assessed_by": "Assistant documentary review; independent review pending",
-          "rationale": "The selected C6* variation operationalises the specified C6.6 capability at every gateway instance. The conceptual masking/filtering responsibility was already documented in baseline. The refinement description does not settle the shared logical-contract questions.",
+          "rationale": "C6* makes C6.6 operationally explicit; the baseline already documents filtering.",
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
@@ -169,7 +160,7 @@
         "C4_C6_star": {
           "verdict": "supported",
           "assessed_by": "Assistant documentary review; independent review pending",
-          "rationale": "The selected C6* variation operationalises the specified C6.6 capability at every gateway instance. The conceptual masking/filtering responsibility was already documented in baseline. The refinement description does not settle the shared logical-contract questions.",
+          "rationale": "C6* makes C6.6 operationally explicit; contract meaning is still unproven.",
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
@@ -178,7 +169,7 @@
         "R7_proposed_logical_design": {
           "verdict": "supported",
           "assessed_by": "Assistant documentary review; independent review pending",
-          "rationale": "The selected C6* variation operationalises the specified C6.6 capability at every gateway instance. The conceptual masking/filtering responsibility was already documented in baseline. The refinement description does not settle the shared logical-contract questions.",
+          "rationale": "C6* makes the enforcement role explicit; the proposed tests assess selected actions separately.",
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
@@ -192,7 +183,7 @@
       "components": [
         "C15"
       ],
-      "criterion": "Assign C15 responsibility for constrained FHIR access using applicable labels or filters.",
+      "criterion": "C15 serves only the records allowed by the requested scope.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -201,13 +192,12 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Table C assigns labels/filters to C15; Section A describes a scoped FHIR query and filtered bundle. This supports the responsibility without determining the complete C6/C15 division of every restriction, which remains open in I3-SCOPE.",
+        "rationale": "Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "C5-AUDIT",
@@ -215,7 +205,7 @@
       "components": [
         "C5"
       ],
-      "criterion": "Assign C5 responsibility for recording permitted and denied access actions.",
+      "criterion": "C5 records allowed and denied access.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -224,13 +214,12 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Section A explicitly logs permitted actions and denials; Table C assigns audit to C5. This supports access-outcome logging, not a complete record of obligation-enforcement results.",
+        "rationale": "Appendix B assigns access logging to C5; detailed enforcement logs are not proven.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "I1-REQUEST",
@@ -239,7 +228,7 @@
         "C4",
         "C6"
       ],
-      "criterion": "C6 supplies the policy context that C4 needs: subject/resource/action/purpose and relevant consent.",
+      "criterion": "C6 sends request details to C4.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -248,13 +237,12 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Table C R7 names subject/resource/action/purpose; Section A describes forwarding verified claims and consent constraints to the PDP. Producer and consumer responsibilities align at the stated logical level.",
+        "rationale": "Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow.",
         "supporting_evidence_refs": [
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "I2-RESPONSE",
@@ -263,19 +251,19 @@
         "C4",
         "C6"
       ],
-      "criterion": "C4's decision and obligations have the same meanings as those accepted by C6.",
+      "criterion": "C4 and C6 agree on decision and restriction meanings.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
       ],
       "open_questions": [
-        "Are obligation action, target and restriction meanings shared by C4 and C6?",
-        "What happens if C6 cannot enforce a mandatory obligation?"
+        "Do C4 and C6 agree on restrictions?",
+        "What happens if a restriction cannot be applied?"
       ],
       "assessment": {
         "verdict": "undetermined",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Decision-plus-obligation exchange is documented, but shared action, target and restriction meanings and unenforceable-obligation handling remain unresolved. Correct obligation selection is a separate C4 behaviour question.",
+        "rationale": "The flow mentions obligations but does not define their shared meaning or failure handling.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
@@ -285,7 +273,7 @@
         "R7_proposed_logical_design": {
           "verdict": "supported",
           "assessed_by": "Assistant bounded proposed-design review; independent review pending",
-          "rationale": "The proposed contract defines shared meanings: mask_fields removes named fields; filter_date_range uses inclusive date bounds; invalid or unsupported obligations block disclosure. T4 and T5 exercise failure handling and combined enforcement; T6 checks one C4 selection and C6 enforcement example. Support is limited to this proposed model, not historical baseline compatibility or general policy correctness.",
+          "rationale": "The proposed contract defines masking, date filtering and safe blocking. Selected examples support these rules only.",
           "supporting_evidence_refs": [
             "proposed_contracts.json, CONTRACT-R7-I2",
             "refined_variations.json, proposed_logical_rules.I2-RESPONSE",
@@ -304,19 +292,19 @@
         "C6",
         "C15"
       ],
-      "criterion": "The scope and restrictions sent by C6 have the meanings C15 applies.",
+      "criterion": "C6 and C15 agree on which records can be returned.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
       ],
       "open_questions": [
-        "Which restrictions does C6 apply and which does C15 apply, including field masking and date bounds?",
-        "How is the authorization scope preserved across that allocation?"
+        "Which restrictions belong to C6 or C15?",
+        "How is the authorized record scope preserved?"
       ],
       "assessment": {
         "verdict": "undetermined",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "The documented interaction supports the intended flow, but does not resolve the listed logical assurance questions. Production payload schemas are not demanded by this criterion.",
+        "rationale": "The flow assigns both roles but does not explain their shared scope rules.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
@@ -326,7 +314,7 @@
         "R7_proposed_logical_design": {
           "verdict": "supported",
           "assessed_by": "Assistant bounded proposed-design review; independent review pending",
-          "rationale": "Within the proposed flat-record model, authorization scope means an explicit allow-list of record IDs. C6 passes this scope and date obligations to C15. C15 restricts retrieval to allowed IDs and inclusive date bounds; C6 then applies masking and rechecks date obligations before disclosure. T7 checks this allocation including exclusion of an otherwise date-eligible unauthorized record. T8-T10 check denial, missing scope and empty scope. Scope correctness is an input assumption: its derivation from policy, consent or patient identity is not established. Historical baseline compatibility is not established.",
+          "rationale": "The proposed model uses trusted allowed record IDs; C15 filters IDs/dates and C6 masks. Scope origin is assumed.",
           "supporting_evidence_refs": [
             "test_proposed_contracts.py, retrieve_scoped_records",
             "test_proposed_contracts.py, enforce_with_retrieval",
@@ -344,18 +332,18 @@
         "C6",
         "C15"
       ],
-      "criterion": "C15's returned data and C6's release step preserve every restriction.",
+      "criterion": "Every restriction remains applied to the final response.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
       ],
       "open_questions": [
-        "What logical rule ensures that data assembly and release preserve every applicable restriction, including combined obligations?"
+        "Can any restricted data reappear before release?"
       ],
       "assessment": {
         "verdict": "undetermined",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "The documented interaction supports the intended flow, but does not resolve the listed logical assurance questions. Production payload schemas are not demanded by this criterion.",
+        "rationale": "The flow requires filtering but does not show how later release steps preserve it.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
@@ -365,7 +353,7 @@
         "R7_proposed_logical_design": {
           "verdict": "supported",
           "assessed_by": "Assistant bounded proposed-design review; independent review pending",
-          "rationale": "Within the proposed flat-record model, C15 returns only records within the supplied ID scope and date bounds. C6 applies all supplied date filters before removing masked fields, then releases only the transformed result. No subsequent assembly step merges original records or restores removed fields. Invalid or unsupported obligations block disclosure without a partial result. Code review supports this restriction-preserving sequence; T5 and T7 provide combined-obligation examples. Support is limited to the modeled actions and trusted scope input, not arbitrary FHIR transformations or historical baseline behaviour.",
+          "rationale": "The proposed model releases only the restricted result; failed restrictions release no records. Not a real FHIR service.",
           "supporting_evidence_refs": [
             "test_proposed_contracts.py, retrieve_scoped_records",
             "test_proposed_contracts.py, enforce_with_retrieval",
@@ -384,24 +372,23 @@
         "C6",
         "C5"
       ],
-      "criterion": "The generated event supplies the information C5 must record.",
+      "criterion": "C6 sends C5 the information needed for audit.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
       ],
       "open_questions": [
-        "Which component produces the event for C5 and what logical information does it contain?"
+        "What audit event does C6 send to C5?"
       ],
       "assessment": {
         "verdict": "undetermined",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "The documented interaction supports the intended flow, but does not resolve the listed logical assurance questions. Production payload schemas are not demanded by this criterion.",
+        "rationale": "The audit interaction is named, but the required event contents are unclear.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "STATE-POLICY",
@@ -409,7 +396,7 @@
       "components": [
         "C4"
       ],
-      "criterion": "Relevant policies have an identified owner.",
+      "criterion": "An owner of policy definitions is identified.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Table A-0"
       ],
@@ -417,12 +404,11 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Table A-0 explicitly names C4.2 as Policy Registry. This supports conceptual policy ownership; storage and consistency implementation are not assessed.",
+        "rationale": "Appendix A lists C4.2 as the Policy Registry; actual storage is not verified.",
         "supporting_evidence_refs": [
           "Appendix_A_corrected(1).docx, Table A-0"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "STATE-CONSENT",
@@ -430,7 +416,7 @@
       "components": [
         "C4"
       ],
-      "criterion": "Identify the owner and reader of current consent state separately from consent credentials and their status.",
+      "criterion": "An owner of current consent is identified.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Section A.0"
       ],
@@ -438,12 +424,11 @@
       "assessment": {
         "verdict": "supported",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Section A.0 explicitly states that C4.2 holds current consent state and is read during policy evaluation. C14 owns consent credentials/status on that representation path; it is not substituted for current consent-state ownership.",
+        "rationale": "Appendix A Section A.0 assigns current consent to C4.2, separately from C14 credentials.",
         "supporting_evidence_refs": [
           "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "STATE-REQUEST",
@@ -451,7 +436,7 @@
       "components": [
         "C6"
       ],
-      "criterion": "Require a persistent session-state owner for the selected single-request R7 scope.",
+      "criterion": "A persistent session owner is necessary for this R7 case.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -460,13 +445,12 @@
       "assessment": {
         "verdict": "not_applicable",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "This pilot selects one request and the R7 source describes decision/obligation exchange within that flow, without specifying a persistent session requirement. This verdict excludes only persistent session ownership; carrying restrictions through the request remains assessed in I2/I3/I4. It does not classify the entire gateway as stateless.",
+        "rationale": "Not needed in this one-request pilot. This does not prove the whole gateway is stateless.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "C5-ENFORCEMENT-OUTCOME",
@@ -474,24 +458,23 @@
       "components": [
         "C5"
       ],
-      "criterion": "Record whether applicable disclosure obligations were successfully enforced or release was blocked.",
+      "criterion": "C5 records whether restrictions were enforced or blocked.",
       "evidence_refs": [
         "RequirementsAppendixB-refined(1).docx, Section A R7",
         "RequirementsAppendixB-refined(1).docx, Table C R7"
       ],
       "open_questions": [
-        "Does the audit record distinguish decision, transformations applied and blocked enforcement?"
+        "Does C5 record applied and blocked restrictions?"
       ],
       "assessment": {
         "verdict": "undetermined",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "The source supports the related responsibility but does not establish this additional coordination or assurance criterion.",
+        "rationale": "The documents do not clearly establish this extra audit detail.",
         "supporting_evidence_refs": [
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      },
-      "configuration_overrides": {}
+      }
     },
     {
       "id": "STATE-CONSENT-COORDINATION",
@@ -500,7 +483,7 @@
         "C4",
         "C14"
       ],
-      "criterion": "Coordinate consent updates or credentials with current consent state.",
+      "criterion": "Consent updates are coordinated during this request.",
       "evidence_refs": [
         "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
       ],
@@ -508,13 +491,12 @@
       "assessment": {
         "verdict": "not_applicable",
         "assessed_by": "Assistant documentary/scope review; independent review pending",
-        "rationale": "Outside this fixed-snapshot pilot: no consent update or C14 credential path is selected. This does not validate consent synchronization.",
+        "rationale": "Not assessed: the selected request uses fixed consent; updates are outside scope.",
         "supporting_evidence_refs": [
           "r7_reference_assessment.json, assessment_scope: analyst-selected fixed-snapshot boundary",
           "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
         ]
-      },
-      "configuration_overrides": {}
+      }
     }
   ],
   "capabilities": [
@@ -557,33 +539,32 @@
     "I5-AUDIT"
   ],
   "boundaries": [
-    "Audit checks remain visible but do not determine direct R7 coverage.",
-    "ATAM-derived descriptions are not independently discovered gaps.",
-    "Scope exclusions do not prove excluded mechanisms work.",
-    "The report exports supplementary audit and ATAM comparison separately; neither changes direct R7 criterion verdicts."
+    "Audit is reported separately from direct R7 coverage.",
+    "ATAM findings guide variants but are not newly discovered by these checks.",
+    "A proposed model does not prove historical implementation correctness."
   ],
   "proposed_rules": {
-    "status": "Proposed design only; not applied to assessed configurations.",
-    "I2-RESPONSE": "C4 supplies applicable obligations. C6 applies all supplied obligations and blocks release if any cannot be enforced. Policy-to-obligation completeness still needs assessment.",
-    "I3-SCOPE": "C15 retrieves within the authorized scope. C6 applies remaining disclosure transformations. This division is proposed.",
-    "I4-DATA": "C6 releases only the final restricted result and does not reintroduce removed data.",
-    "script_boundary": "The current script does not evaluate these proposed rules.",
+    "status": "Proposed only; no change to baseline verdicts.",
+    "I2-RESPONSE": "C6 applies all obligations from C4, or blocks release.",
+    "I3-SCOPE": "C15 limits retrieval; C6 applies remaining restrictions.",
+    "I4-DATA": "C6 releases only restricted data.",
+    "script_boundary": "The assessment script does not test these rules.",
     "example_ref": "refined_variations.json, proposed_selection_example"
   },
   "atam_comparison": [
     {
       "gap": "G2",
-      "interpretation": "Baseline documents obligation output. C4* adds a named handler; this pilot does not establish missing baseline execution.",
+      "interpretation": "C4* adds a named handler, but baseline already documents obligations.",
       "assessment_scope": "documentary_interpretation_not_independent_gap_reproduction"
     },
     {
       "gap": "G3",
-      "interpretation": "Baseline documents mask/filter enforcement. C6* specifies operational availability; this pilot does not independently verify it.",
+      "interpretation": "C6* makes enforcement explicit, but baseline already documents filtering.",
       "assessment_scope": "documentary_interpretation_not_independent_gap_reproduction"
     },
     {
       "gap": null,
-      "interpretation": "I2/I3/I4 remain unresolved. Review against ATAM; unresolved evidence is not automatically a new gap.",
+      "interpretation": "I2, I3 and I4 are still unclear in baseline evidence; this is not a newly proven gap.",
       "assessment_scope": "documentary_interpretation_not_independent_gap_reproduction"
     }
   ]
