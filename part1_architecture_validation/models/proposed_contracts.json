@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "purpose": "Proposed R7 rules for C4 to send decisions and restrictions to C6. Not a verified baseline implementation.",
-  "assessment_status": "proposed_not_reviewed_or_tested",
+  "purpose": "Example rules for C4 decisions and C6 disclosure enforcement. Not baseline implementation evidence.",
+  "assessment_status": "proposed",
   "contracts": [
     {
       "id": "CONTRACT-R7-I2",
@@ -18,11 +18,11 @@
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ],
         "statements": [
-          "C4 provides a decision and any restrictions.",
-          "C6 applies the restrictions before data is released.",
-          "C15 may help filter records."
+          "C4 sends allow/deny and restrictions.",
+          "C6 applies restrictions before release.",
+          "C15 helps filter records."
         ],
-        "boundary": "These are described roles; the exact message format and rules below are proposed."
+        "boundary": "Only conceptual roles are documented; exact rules are proposed."
       },
       "proposed_payload": {
         "type": "object",
@@ -51,7 +51,7 @@
                 "fields": {
                   "type": "array_of_unique_nonempty_strings"
                 },
-                "meaning": "Remove named fields."
+                "meaning": "Remove every named top-level field from every disclosed model record."
               },
               {
                 "action": "filter_date_range",
@@ -70,7 +70,7 @@
                 "to": {
                   "type": "ISO_8601_calendar_date"
                 },
-                "meaning": "Keep dates within the inclusive range."
+                "meaning": "Return only records whose named date lies within the inclusive bounds."
               }
             ]
           }
@@ -94,20 +94,34 @@
         }
       },
       "proposed_processing_rules": [
-        "Deny access: release no data.",
-        "Permit access: apply all listed restrictions.",
-        "Filter by date first, then remove named fields.",
-        "If a required restriction is invalid or cannot be applied, release no data.",
-        "Check the full response before release; never release a partial result."
+        "Check the decision, obligations and dates before release.",
+        "Deny returns no health records.",
+        "Permit applies every listed restriction. An empty list means no extra transformation, not bypassing authorization.",
+        "Unknown restrictions, invalid dates or missing required fields block all disclosure.",
+        "Filter records by date first, then remove masked fields.",
+        "A missing record date blocks a date-filtered request; masking an already absent field is harmless.",
+        "Never return partly restricted results. Audit is assessed separately."
       ],
       "modeling_assumptions": [
         {
           "id": "A-R7-1",
-          "detail": "This message format and its failure rules are proposed, not existing API evidence."
+          "detail": "This JSON is a proposed contract, not a real API."
         },
         {
           "id": "A-R7-2",
-          "detail": "Records are simple invented examples, not real FHIR data. Other security checks are outside this example."
+          "detail": "Records are flat synthetic data, not real FHIR resources."
+        },
+        {
+          "id": "A-R7-3",
+          "detail": "Date bounds are inclusive calendar dates; timestamps are not modeled."
+        },
+        {
+          "id": "A-R7-4",
+          "detail": "Invalid restrictions block release; this is a proposed rule."
+        },
+        {
+          "id": "A-R7-5",
+          "detail": "The right response is assumed to match the right request."
         }
       ],
       "test_fixture": [
@@ -135,6 +149,62 @@
           "expected": {
             "outcome": "denied",
             "released_records": []
+          }
+        },
+        {
+          "id": "R7-T2",
+          "name": "Mask removes prohibited field",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "mask_fields",
+                "fields": [
+                  "address"
+                ]
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "permitted",
+            "released_records": [
+              {
+                "id": "record-1",
+                "record_date": "2026-09-01",
+                "clinical_summary": "Older synthetic record"
+              },
+              {
+                "id": "record-2",
+                "record_date": "2026-09-20",
+                "clinical_summary": "Recent synthetic record"
+              }
+            ]
+          }
+        },
+        {
+          "id": "R7-T3",
+          "name": "Date filtering excludes older record",
+          "policy_response": {
+            "decision": "permit",
+            "obligations": [
+              {
+                "action": "filter_date_range",
+                "field": "record_date",
+                "from": "2026-09-10",
+                "to": "2026-10-09"
+              }
+            ]
+          },
+          "expected": {
+            "outcome": "permitted",
+            "released_records": [
+              {
+                "id": "record-2",
+                "record_date": "2026-09-20",
+                "address": "Synthetic address B",
+                "clinical_summary": "Recent synthetic record"
+              }
+            ]
           }
         },
         {
@@ -186,8 +256,8 @@
         }
       ],
       "assessment_boundaries": [
-        "These examples do not prove that the real baseline works this way.",
-        "Passing these examples does not prove that all of R7 is satisfied."
+        "These examples do not validate historical C4/C6 software.",
+        "Passing examples does not establish complete R7 or FHIR correctness."
       ]
     }
   ]
