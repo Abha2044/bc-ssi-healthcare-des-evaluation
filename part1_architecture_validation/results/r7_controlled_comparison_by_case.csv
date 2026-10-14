@@ -1,0 +1,17 @@
+profile,case,description,common_oracle_and_scope,baseline_preparation_available,baseline_enforcement_available,refined_preparation_available,refined_enforcement_available,baseline_outcome,refined_outcome,baseline_acceptance,refined_acceptance,baseline_complete_delivery,refined_complete_delivery,baseline_privacy_protected,refined_privacy_protected
+shared_responsibilities,R7-T1,Deny prevents disclosure,verified_equal,True,True,True,True,denied,denied,PASS,PASS,not_applicable,not_applicable,True,True
+shared_responsibilities,R7-T2,Mask removes prohibited field,verified_equal,True,True,True,True,permitted,permitted,PASS,PASS,complete,complete,True,True
+shared_responsibilities,R7-T3,Date filtering excludes older record,verified_equal,True,True,True,True,permitted,permitted,PASS,PASS,complete,complete,True,True
+shared_responsibilities,R7-T4,Unsupported obligation blocks disclosure,verified_equal,True,True,True,True,enforcement_blocked,enforcement_blocked,PASS,PASS,not_applicable,not_applicable,True,True
+shared_responsibilities,R7-T5,Mask and date filter apply together,verified_equal,True,True,True,True,permitted,permitted,PASS,PASS,complete,complete,True,True
+shared_responsibilities,R7-V6,Apply both restrictions to allowed records,verified_equal,True,True,True,True,permitted,permitted,PASS,PASS,complete,complete,True,True
+shared_responsibilities,R7-V7,Block access if scope is missing,verified_equal,True,True,True,True,enforcement_blocked,enforcement_blocked,PASS,PASS,not_applicable,not_applicable,True,True
+shared_responsibilities,R7-V8,Return no records when scope is empty,verified_equal,True,True,True,True,permitted,permitted,PASS,PASS,complete,complete,True,True
+atam_informed_availability,R7-T1,Deny prevents disclosure,verified_equal,False,False,True,True,denied,denied,PASS,PASS,not_applicable,not_applicable,True,True
+atam_informed_availability,R7-T2,Mask removes prohibited field,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
+atam_informed_availability,R7-T3,Date filtering excludes older record,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
+atam_informed_availability,R7-T4,Unsupported obligation blocks disclosure,verified_equal,False,False,True,True,preparation_blocked,enforcement_blocked,PASS,PASS,not_applicable,not_applicable,True,True
+atam_informed_availability,R7-T5,Mask and date filter apply together,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
+atam_informed_availability,R7-V6,Apply both restrictions to allowed records,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
+atam_informed_availability,R7-V7,Block access if scope is missing,verified_equal,False,False,True,True,preparation_blocked,enforcement_blocked,FAIL,PASS,not_applicable,not_applicable,True,True
+atam_informed_availability,R7-V8,Return no records when scope is empty,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
