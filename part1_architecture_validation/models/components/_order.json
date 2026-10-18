@@ -1,0 +1,20 @@
+{
+  "note": "Load order for components/*.json. The loader fails if this list and the folder contents disagree.",
+  "components": [
+    "C1",
+    "C7",
+    "C4",
+    "C14",
+    "C19",
+    "C24",
+    "C10",
+    "C17",
+    "C23",
+    "C25",
+    "C5",
+    "C6",
+    "C12",
+    "C13",
+    "C15"
+  ]
+}

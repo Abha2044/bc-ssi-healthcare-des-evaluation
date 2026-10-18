@@ -1,0 +1,51 @@
+{
+  "id": "C10",
+  "name": "Source Connectors",
+  "deployment": "required",
+  "layers": {
+    "validation_and_integration": [
+      "C10.1",
+      "C10.2",
+      "C10.3",
+      "C10.4"
+    ]
+  },
+  "subcomponents": {
+    "C10.1": "Ingestion API",
+    "C10.2": "Parser / Mapper",
+    "C10.3": "Queue Buffer",
+    "C10.4": "Retry Handler"
+  },
+  "behaviours": {
+    "receive_ingestion_request": [
+      "C10.1"
+    ],
+    "parse_and_map_source_data": [
+      "C10.2"
+    ],
+    "buffer_ingestion_work": [
+      "C10.3"
+    ],
+    "retry_ingestion_work": [
+      "C10.4"
+    ]
+  },
+  "provides": {
+    "ingestion_api": [
+      "C10.1"
+    ],
+    "mapped_data_output": [
+      "C10.2"
+    ]
+  },
+  "requires": {},
+  "state_model": "stateful",
+  "state": {
+    "buffered_ingestion_work": [
+      "C10.3"
+    ],
+    "retry_state": [
+      "C10.4"
+    ]
+  }
+}

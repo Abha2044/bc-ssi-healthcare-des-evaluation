@@ -1,0 +1,53 @@
+{
+  "id": "C19",
+  "name": "Binding Service",
+  "deployment": "optional",
+  "layers": {
+    "privacy_and_policy": [
+      "C19.1",
+      "C19.2",
+      "C19.3",
+      "C19.4"
+    ]
+  },
+  "subcomponents": {
+    "C19.1": "DID Resolver Hook",
+    "C19.2": "DID-Patient Mapper",
+    "C19.3": "Binding Store",
+    "C19.4": "FHIR Patient.link Updater"
+  },
+  "behaviours": {
+    "request_did_resolution": [
+      "C19.1"
+    ],
+    "map_did_to_patient": [
+      "C19.2"
+    ],
+    "store_identity_record_binding": [
+      "C19.3"
+    ],
+    "update_fhir_patient_link": [
+      "C19.4"
+    ]
+  },
+  "provides": {
+    "identity_record_binding_service": [
+      "C19.2",
+      "C19.3"
+    ]
+  },
+  "requires": {
+    "did_resolution_service": [
+      "C19.1"
+    ],
+    "fhir_patient_update_service": [
+      "C19.4"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "identity_record_bindings": [
+      "C19.3"
+    ]
+  }
+}

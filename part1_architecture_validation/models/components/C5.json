@@ -1,0 +1,67 @@
+{
+  "id": "C5",
+  "name": "Audit / Observability",
+  "deployment": "cross_layer",
+  "layers": {
+    "access_and_trust": [
+      "C5.1",
+      "C5.2",
+      "C5.3",
+      "C5.4"
+    ],
+    "privacy_and_policy": [
+      "C5.1",
+      "C5.2",
+      "C5.3",
+      "C5.4"
+    ],
+    "validation_and_integration": [
+      "C5.1",
+      "C5.2",
+      "C5.3",
+      "C5.4"
+    ]
+  },
+  "subcomponents": {
+    "C5.1": "Event Logger",
+    "C5.2": "Blockchain Anchor (optional)",
+    "C5.3": "Metrics Exporter",
+    "C5.4": "Alert Hooks"
+  },
+  "behaviours": {
+    "log_audit_event": [
+      "C5.1"
+    ],
+    "anchor_audit_evidence": [
+      "C5.2"
+    ],
+    "export_operational_metrics": [
+      "C5.3"
+    ],
+    "emit_alert": [
+      "C5.4"
+    ]
+  },
+  "provides": {
+    "audit_event_logging_service": [
+      "C5.1"
+    ],
+    "metrics_export_interface": [
+      "C5.3"
+    ],
+    "alert_hook_interface": [
+      "C5.4"
+    ]
+  },
+  "requires": {
+    "audit_event_input": [
+      "C5.1"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "audit_events": [
+      "C5.1"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "C13",
+  "name": "Verifier Service",
+  "deployment": "cross_layer",
+  "layers": {
+    "access_and_trust": [
+      "C13.1",
+      "C13.2"
+    ],
+    "privacy_and_policy": [
+      "C13.3",
+      "C13.4"
+    ],
+    "validation_and_integration": [
+      "C13.5-8"
+    ]
+  },
+  "subcomponents": {
+    "C13.1": "Proof Validator",
+    "C13.2": "Signature Verifier",
+    "C13.3": "Credential Parser",
+    "C13.4": "VC Policy Evaluator",
+    "C13.5-8": "Batch Verification"
+  },
+  "behaviours": {
+    "validate_proof": [
+      "C13.1"
+    ],
+    "verify_signature": [
+      "C13.2"
+    ],
+    "parse_credential": [
+      "C13.3"
+    ],
+    "evaluate_credential_policy": [
+      "C13.4"
+    ],
+    "perform_batch_verification": [
+      "C13.5-8"
+    ]
+  },
+  "provides": {
+    "credential_verification_service": [
+      "C13.1",
+      "C13.2",
+      "C13.3",
+      "C13.4"
+    ],
+    "batch_verification_service": [
+      "C13.5-8"
+    ]
+  },
+  "requires": {},
+  "state_model": "undetermined",
+  "state": {}
+}

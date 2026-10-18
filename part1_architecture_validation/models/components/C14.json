@@ -1,0 +1,49 @@
+{
+  "id": "C14",
+  "name": "Issuer Service",
+  "deployment": "optional",
+  "layers": {
+    "privacy_and_policy": [
+      "C14.1",
+      "C14.2",
+      "C14.3",
+      "C14.4"
+    ]
+  },
+  "subcomponents": {
+    "C14.1": "Consent VC Issuer",
+    "C14.2": "Credential Signer",
+    "C14.3": "Schema Binder",
+    "C14.4": "Revocation Status"
+  },
+  "behaviours": {
+    "issue_consent_credential": [
+      "C14.1"
+    ],
+    "sign_credential": [
+      "C14.2"
+    ],
+    "bind_credential_to_schema": [
+      "C14.3"
+    ],
+    "maintain_revocation_status": [
+      "C14.4"
+    ]
+  },
+  "provides": {
+    "credential_issuance_service": [
+      "C14.1",
+      "C14.2"
+    ],
+    "revocation_status_service": [
+      "C14.4"
+    ]
+  },
+  "requires": {},
+  "state_model": "stateful",
+  "state": {
+    "credential_revocation_status": [
+      "C14.4"
+    ]
+  }
+}

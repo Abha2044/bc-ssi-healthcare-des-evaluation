@@ -1,0 +1,68 @@
+{
+  "id": "C15",
+  "name": "FHIR Server",
+  "deployment": "cross_layer",
+  "layers": {
+    "access_and_trust": [
+      "C15.1",
+      "C15.2",
+      "C15.3",
+      "C15.4"
+    ],
+    "privacy_and_policy": [
+      "C15.1",
+      "C15.2",
+      "C15.3",
+      "C15.4"
+    ],
+    "validation_and_integration": [
+      "C15.1",
+      "C15.2",
+      "C15.3",
+      "C15.4"
+    ]
+  },
+  "subcomponents": {
+    "C15.1": "REST API",
+    "C15.2": "Database Layer",
+    "C15.3": "Bundle Normalizer",
+    "C15.4": "Authorization Filter"
+  },
+  "behaviours": {
+    "serve_fhir_rest_request": [
+      "C15.1"
+    ],
+    "store_fhir_resource": [
+      "C15.2"
+    ],
+    "normalize_fhir_bundle": [
+      "C15.3"
+    ],
+    "filter_by_authorization": [
+      "C15.4"
+    ],
+    "apply_fhir_labels_or_filters": [
+      "C15.4"
+    ]
+  },
+  "provides": {
+    "fhir_rest_api": [
+      "C15.1"
+    ],
+    "fhir_patient_update_service": [
+      "C15.1",
+      "C15.2"
+    ]
+  },
+  "requires": {
+    "authorization_context": [
+      "C15.4"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "fhir_resources": [
+      "C15.2"
+    ]
+  }
+}

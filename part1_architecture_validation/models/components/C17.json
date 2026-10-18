@@ -1,0 +1,50 @@
+{
+  "id": "C17",
+  "name": "Standards Validator",
+  "deployment": "required",
+  "layers": {
+    "validation_and_integration": [
+      "C17.1",
+      "C17.2",
+      "C17.3",
+      "C17.4"
+    ]
+  },
+  "subcomponents": {
+    "C17.1": "Profile Validator",
+    "C17.2": "Terminology Validator",
+    "C17.3": "Schema Checker",
+    "C17.4": "Conformance Reporter"
+  },
+  "behaviours": {
+    "validate_profile": [
+      "C17.1"
+    ],
+    "validate_terminology": [
+      "C17.2"
+    ],
+    "check_schema": [
+      "C17.3"
+    ],
+    "report_conformance": [
+      "C17.4"
+    ]
+  },
+  "provides": {
+    "standards_validation_service": [
+      "C17.1",
+      "C17.2",
+      "C17.3",
+      "C17.4"
+    ]
+  },
+  "requires": {
+    "clinical_data_for_validation": [
+      "C17.1",
+      "C17.2",
+      "C17.3"
+    ]
+  },
+  "state_model": "undetermined",
+  "state": {}
+}

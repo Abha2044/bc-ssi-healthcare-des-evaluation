@@ -1,0 +1,48 @@
+{
+  "id": "C7",
+  "name": "Identity Provider",
+  "deployment": "required",
+  "layers": {
+    "access_and_trust": [
+      "C7.1",
+      "C7.2",
+      "C7.3",
+      "C7.4"
+    ]
+  },
+  "subcomponents": {
+    "C7.1": "OIDC4VC Provider",
+    "C7.2": "Token Issuer",
+    "C7.3": "Authentication Module",
+    "C7.4": "DID Resolver"
+  },
+  "behaviours": {
+    "provide_oidc4vc_service": [
+      "C7.1"
+    ],
+    "issue_authentication_token": [
+      "C7.2"
+    ],
+    "authenticate_subject": [
+      "C7.3"
+    ],
+    "resolve_did": [
+      "C7.4"
+    ]
+  },
+  "provides": {
+    "oidc4vc_service": [
+      "C7.1"
+    ],
+    "authentication_service": [
+      "C7.2",
+      "C7.3"
+    ],
+    "did_resolution_service": [
+      "C7.4"
+    ]
+  },
+  "requires": {},
+  "state_model": "undetermined",
+  "state": {}
+}

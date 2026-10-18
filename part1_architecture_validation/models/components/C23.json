@@ -1,0 +1,55 @@
+{
+  "id": "C23",
+  "name": "Queue / Event Bus",
+  "deployment": "required",
+  "layers": {
+    "validation_and_integration": [
+      "C23.1",
+      "C23.2",
+      "C23.3",
+      "C23.4"
+    ]
+  },
+  "subcomponents": {
+    "C23.1": "Publisher",
+    "C23.2": "Consumer",
+    "C23.3": "Retry / Dead Letter Queue",
+    "C23.4": "Metrics Exporter"
+  },
+  "behaviours": {
+    "publish_event": [
+      "C23.1"
+    ],
+    "consume_event": [
+      "C23.2"
+    ],
+    "retain_retry_and_dead_letter_work": [
+      "C23.3"
+    ],
+    "export_queue_metrics": [
+      "C23.4"
+    ]
+  },
+  "provides": {
+    "event_consumer_interface": [
+      "C23.2"
+    ],
+    "queue_metrics_interface": [
+      "C23.4"
+    ]
+  },
+  "requires": {
+    "event_publisher_input": [
+      "C23.1"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "retry_work": [
+      "C23.3"
+    ],
+    "dead_letter_work": [
+      "C23.3"
+    ]
+  }
+}

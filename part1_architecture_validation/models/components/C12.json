@@ -1,0 +1,64 @@
+{
+  "id": "C12",
+  "name": "Trust Registry / Resolver",
+  "deployment": "cross_layer",
+  "layers": {
+    "access_and_trust": [
+      "C12.1",
+      "C12.2",
+      "C12.3",
+      "C12.4"
+    ],
+    "validation_and_integration": [
+      "C12.1",
+      "C12.2",
+      "C12.3",
+      "C12.4"
+    ]
+  },
+  "subcomponents": {
+    "C12.1": "Issuer Registry",
+    "C12.2": "Schema Store",
+    "C12.3": "DID Resolver",
+    "C12.4": "Credential Status / Revocation"
+  },
+  "behaviours": {
+    "resolve_trusted_issuer": [
+      "C12.1"
+    ],
+    "provide_trusted_schema": [
+      "C12.2"
+    ],
+    "resolve_did": [
+      "C12.3"
+    ],
+    "provide_credential_status": [
+      "C12.4"
+    ]
+  },
+  "provides": {
+    "trust_resolution_service": [
+      "C12.1",
+      "C12.3"
+    ],
+    "trusted_schema_service": [
+      "C12.2"
+    ],
+    "credential_status_service": [
+      "C12.4"
+    ]
+  },
+  "requires": {},
+  "state_model": "stateful",
+  "state": {
+    "trusted_issuers": [
+      "C12.1"
+    ],
+    "trusted_schemas": [
+      "C12.2"
+    ],
+    "credential_status_or_revocation_information": [
+      "C12.4"
+    ]
+  }
+}

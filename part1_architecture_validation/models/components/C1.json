@@ -1,0 +1,50 @@
+{
+  "id": "C1",
+  "name": "Wallet / UI",
+  "deployment": "required",
+  "layers": {
+    "access_and_trust": [
+      "C1.1",
+      "C1.2",
+      "C1.3",
+      "C1.4"
+    ]
+  },
+  "subcomponents": {
+    "C1.1": "Web Wallet UI",
+    "C1.2": "Mobile Wallet / Agent",
+    "C1.3": "Local Credential Store",
+    "C1.4": "OIDC4VC Client / Bridge"
+  },
+  "behaviours": {
+    "support_web_wallet_interaction": [
+      "C1.1"
+    ],
+    "support_mobile_wallet_interaction": [
+      "C1.2"
+    ],
+    "store_credentials_locally": [
+      "C1.3"
+    ],
+    "act_as_oidc4vc_client": [
+      "C1.4"
+    ]
+  },
+  "provides": {
+    "wallet_user_interface": [
+      "C1.1",
+      "C1.2"
+    ]
+  },
+  "requires": {
+    "oidc4vc_service": [
+      "C1.4"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "local_credentials": [
+      "C1.3"
+    ]
+  }
+}

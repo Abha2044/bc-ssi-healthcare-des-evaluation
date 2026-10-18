@@ -1,0 +1,67 @@
+{
+  "id": "C25",
+  "name": "Orchestrator / Scheduler",
+  "deployment": "required",
+  "layers": {
+    "validation_and_integration": [
+      "C25.1",
+      "C25.2",
+      "C25.3",
+      "C25.4",
+      "C25.5"
+    ]
+  },
+  "subcomponents": {
+    "C25.1": "Retry Queue / DLQ",
+    "C25.2": "Scheduler / Job Runner",
+    "C25.3": "Backoff Controller",
+    "C25.4": "Status Monitor",
+    "C25.5": "Workflow Dispatcher"
+  },
+  "behaviours": {
+    "retain_retry_and_dead_letter_work": [
+      "C25.1"
+    ],
+    "schedule_job": [
+      "C25.2"
+    ],
+    "control_retry_backoff": [
+      "C25.3"
+    ],
+    "monitor_workflow_status": [
+      "C25.4"
+    ],
+    "dispatch_workflow": [
+      "C25.5"
+    ]
+  },
+  "provides": {
+    "workflow_dispatch_service": [
+      "C25.5"
+    ],
+    "workflow_status_service": [
+      "C25.4"
+    ]
+  },
+  "requires": {
+    "scheduled_or_failed_work_input": [
+      "C25.1",
+      "C25.2"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "retry_work": [
+      "C25.1"
+    ],
+    "dead_letter_work": [
+      "C25.1"
+    ],
+    "schedules": [
+      "C25.2"
+    ],
+    "workflow_status": [
+      "C25.4"
+    ]
+  }
+}

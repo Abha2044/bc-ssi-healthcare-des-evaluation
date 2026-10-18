@@ -1,0 +1,47 @@
+{
+  "id": "C24",
+  "name": "Compliance Service",
+  "deployment": "optional",
+  "layers": {
+    "privacy_and_policy": [
+      "C24.5",
+      "C24.6",
+      "C24.7"
+    ]
+  },
+  "subcomponents": {
+    "C24.5": "Event Recorder",
+    "C24.6": "Retention Manager",
+    "C24.7": "Report Builder"
+  },
+  "behaviours": {
+    "record_compliance_event": [
+      "C24.5"
+    ],
+    "manage_retention": [
+      "C24.6"
+    ],
+    "build_compliance_report": [
+      "C24.7"
+    ]
+  },
+  "provides": {
+    "compliance_reporting_service": [
+      "C24.7"
+    ]
+  },
+  "requires": {
+    "compliance_event_input": [
+      "C24.5"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "compliance_events": [
+      "C24.5"
+    ],
+    "retention_metadata": [
+      "C24.6"
+    ]
+  }
+}

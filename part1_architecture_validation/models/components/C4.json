@@ -1,0 +1,47 @@
+{
+  "id": "C4",
+  "name": "Policy Engine (PDP)",
+  "deployment": "required",
+  "layers": {
+    "privacy_and_policy": [
+      "C4.1",
+      "C4.2",
+      "C4.3"
+    ]
+  },
+  "subcomponents": {
+    "C4.1": "Policy Evaluator",
+    "C4.2": "Policy Registry",
+    "C4.3": "Decision API"
+  },
+  "behaviours": {
+    "evaluate_policy": [
+      "C4.1"
+    ],
+    "maintain_policy_registry": [
+      "C4.2"
+    ],
+    "return_policy_decision": [
+      "C4.3"
+    ],
+    "return_decision_with_obligations": [
+      "C4.3"
+    ]
+  },
+  "provides": {
+    "policy_decision_api": [
+      "C4.3"
+    ]
+  },
+  "requires": {
+    "policy_evaluation_input": [
+      "C4.1"
+    ]
+  },
+  "state_model": "stateful",
+  "state": {
+    "policy_definitions": [
+      "C4.2"
+    ]
+  }
+}

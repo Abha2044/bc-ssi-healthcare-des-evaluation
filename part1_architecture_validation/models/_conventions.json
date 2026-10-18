@@ -1,0 +1,32 @@
+{
+  "schema_version": "2.1",
+  "purpose": "Conceptual-baseline component responsibilities for requirement-to-component validation. Coverage is evaluated separately.",
+  "source": {
+    "document": "Appendix_A_corrected.docx",
+    "location": "Table A-0: Baseline architecture components and sub-components",
+    "architecture_version": "V1 conceptual baseline",
+    "supplementary_sources": [
+      {
+        "document": "RequirementsAppendixB-refined(1).docx",
+        "location": "Baseline component responsibilities and runtime-flow descriptions",
+        "architecture_scope": "Conceptual baseline, as confirmed by the author"
+      }
+    ]
+  },
+  "conventions": {
+    "behaviour_rule": "Behaviours represent documented baseline responsibilities, not verified implementations.",
+    "interface_rule": "Interfaces represent named interactions; matching names do not prove compatibility. Missing details remain undetermined.",
+    "state_rule": "Stateful requires documented stored state. Otherwise, classification is undetermined, not stateless.",
+    "optional_component_rule": "Optional components are assessed per requirement or flow; presence is not assumed.",
+    "closed_world_rule": "Not documented does not mean absent from all implementations.",
+    "excluded": [
+      "ATAM gaps and conclusions",
+      "refined capabilities",
+      "expected coverage",
+      "scenario outcomes",
+      "performance assumptions"
+    ],
+    "subcomponent_attribution_rule": "R7 subcomponent assignments are modeling decisions, not explicit source claims.",
+    "evidence_rule": "Coverage requires source evidence and interpretation in capability_mappings.json, not just behaviour names."
+  }
+}

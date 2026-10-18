@@ -1,0 +1,93 @@
+{
+  "id": "C6",
+  "name": "API Gateway / PEP",
+  "deployment": "cross_layer",
+  "layers": {
+    "access_and_trust": [
+      "C6.1",
+      "C6.2"
+    ],
+    "privacy_and_policy": [
+      "C6.3",
+      "C6.4",
+      "C6.2"
+    ],
+    "validation_and_integration": [
+      "C6.5",
+      "C6.7",
+      "C6.8"
+    ]
+  },
+  "subcomponents": {
+    "C6.1": "Auth Layer",
+    "C6.2": "Policy Plugin",
+    "C6.3": "Router",
+    "C6.4": "Rate Limiter",
+    "C6.5": "Audit Hook",
+    "C6.7": "Stream Guard",
+    "C6.8": "Quota Controller"
+  },
+  "behaviours": {
+    "process_authentication_context": [
+      "C6.1"
+    ],
+    "request_or_apply_policy_decision": [
+      "C6.2"
+    ],
+    "route_request": [
+      "C6.3"
+    ],
+    "limit_request_rate": [
+      "C6.4"
+    ],
+    "invoke_audit_hook": [
+      "C6.5"
+    ],
+    "guard_stream": [
+      "C6.7"
+    ],
+    "control_quota": [
+      "C6.8"
+    ],
+    "intercept_access_request": [
+      "C6.1",
+      "C6.2"
+    ],
+    "enforce_need_to_know_decision": [
+      "C6.2"
+    ],
+    "enforce_disclosure_obligations": [
+      "C6.2"
+    ],
+    "mask_response": [
+      "C6.2"
+    ],
+    "filter_response": [
+      "C6.2"
+    ]
+  },
+  "provides": {
+    "gateway_request_interface": [
+      "C6.1",
+      "C6.2",
+      "C6.3",
+      "C6.4"
+    ],
+    "audit_hook_interface": [
+      "C6.5"
+    ]
+  },
+  "requires": {
+    "policy_decision_api": [
+      "C6.2"
+    ],
+    "fhir_rest_api": [
+      "C6.3"
+    ],
+    "audit_event_logging_service": [
+      "C6.5"
+    ]
+  },
+  "state_model": "undetermined",
+  "state": {}
+}
