@@ -39,18 +39,32 @@ flowchart TD
 
 ```text
 part1_architecture_validation/
-  COLLABORATOR_HANDOFF.md             <-- START HERE (this page)
-  README.md                           <-- Full detailed explanation
-  evidence/                           <-- Appendix A, Appendix B, criterion derivation
-  models/                             <-- baseline, requirements, proposed contracts, variations
-  validate_architecture.py            <-- Structural/traceability validation
-  assess_reference_coverage.py        <-- Documentary R7 verdicts
+  README.md                           <-- START HERE
+  docs/
+    PART1_ONE_PAGE_SUMMARY.md         <-- Part 1 on one page
+    R7_CHECKS_AND_EVIDENCE_GUIDE.md   <-- how 1.1 and 1.2 are done
+    COLLABORATOR_HANDOFF.md           <-- Part 2 planning (this page)
+  evidence/
+    r7_criterion_derivation.md        <-- why each criterion exists
+    r7_criterion_derivation.csv       <-- the same table, machine-readable
+    Appendix_A_corrected.docx
+    RequirementsAppendixB-refined.docx
+  models/
+    requirements.json                 <-- what R7 needs; names no component
+    flows.json                        <-- who interacts with whom
+    components/C*.json                <-- one file per component (Table A-0)
+    capability_mappings.json          <-- the claims, each with a citation
+    r7_reference_assessment.json      <-- the 16 checks and their verdicts
+    refined_variations.json           <-- what C4* and C6* change
+    proposed_contracts.json           <-- the proposed I2 payload and tests
+  validate_architecture.py            <-- structural / traceability checks
+  assess_reference_coverage.py        <-- documentary R7 verdicts  (PRIMARY 1.1)
   test_proposed_contracts.py          <-- I2-I4 proposed logical tests
-  run_r7_variation_experiment.py      <-- Original experiment engine
-  assess_variations.py                <-- Variation definitions/ATAM comparison
-  compare_r7_controlled.py           <-- Controlled comparison (copy in if missing)
-  build_r7_main_comparison.py         <-- Reporting only
-  results/                            <-- Generated evidence (keep all CSVs)
+  run_r7_variation_experiment.py      <-- experiment engine
+  assess_variations.py                <-- variation definitions / ATAM trace
+  compare_r7_controlled.py            <-- controlled comparison  (PRIMARY 1.2)
+  build_r7_main_comparison.py         <-- reporting only
+  results/                            <-- generated evidence
 ```
 
 **Reading order:** (1) this page → (2) `evidence/r7_criterion_derivation.md` → (3) `results/r7_main_component_requirement_comparison.md` → (4) `results/r7_controlled_comparison.md`. Consult detailed CSVs and appendices to audit particular claims.
@@ -59,7 +73,7 @@ part1_architecture_validation/
 
 ## Reproduce from repository root
 
-Copy `compare_r7_controlled.py` beside the other scripts first, if it is not present. Then run in this order:
+Then run in this order:
 
 ```bash
 python part1_architecture_validation/validate_architecture.py

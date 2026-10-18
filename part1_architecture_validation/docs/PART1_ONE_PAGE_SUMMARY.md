@@ -22,10 +22,9 @@ flowchart TD
 
 **Key terms:** C4 prepares policy obligations; C6 enforces restrictions; C15 supports scoped FHIR data. G2 motivates dedicated C4.4 obligation handling; G3 motivates operationalizing C6.6 minimization. I2 = common obligation semantics; I3 = shared authorized scope; I4 = safe final disclosure. C5 audit completeness remains separate and unresolved.
 
-**Read only these four files first:**
-1. `PART1_ONE_PAGE_SUMMARY.md` — overview (this file).
-2. `evidence/r7_criterion_derivation.md` — why the checks were defined.
-3. `results/r7_main_component_requirement_comparison.md` — main baseline/refinement mapping.
-4. `results/r7_controlled_comparison.md` — controlled assumptions and experimental outputs.
+**Where to go next** (the repository `README.md` lists the full reading order):
+1. `evidence/r7_criterion_derivation.md` — why the checks were defined.
+2. `results/r7_main_component_requirement_comparison.md` — main baseline/refinement mapping.
+3. `results/r7_controlled_comparison.md` — controlled assumptions and experimental outputs.
 
 **For Part 2:** Agree on scenarios, requirement/component/gap mapping, baseline-versus-refined implementation assumptions, and measurable metrics *before* implementing tests or DES. Part 1 is functional/documentary; it does **not** measure latency, uptime or reliability.
