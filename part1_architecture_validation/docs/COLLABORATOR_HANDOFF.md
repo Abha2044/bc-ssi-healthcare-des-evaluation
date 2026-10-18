@@ -7,8 +7,8 @@
 ```mermaid
 flowchart TD
     A[Appendix B: R7 requirement] --> B[Trace roles: C4 policy, C6 enforcement, C15 FHIR; C5 audit]
-    B --> C[Part 1.1: Apply 13 direct checks]
-    C --> D[8 supported, 3 unresolved, 2 not applicable]
+    B --> C[Part 1.1: Apply 14 direct checks]
+    C --> D[8 supported, 4 unresolved, 2 N/A; 9/3/2 with C6*]
     D --> E[Appendix A: G2 and G3 motivate C4* / C6*]
     E --> F[Specify I2, I3, I4 contracts; run 10 proposed-model tests]
     F --> G[Part 1.2: Same contracts, 8 cases, two availability profiles]
@@ -22,11 +22,11 @@ flowchart TD
 
 | Result | Question | Main evidence | Conclusion |
 |---|---|---|---|
-| **1 — Documentary R7 coverage (1.1)** | Are behaviour, interface and relevant state responsibilities sufficiently specified? | `evidence/r7_criterion_derivation.md` and `results/reference_requirement_coverage.csv` | Baseline and ATAM-only C4*+C6*: **8 supported, 3 unresolved, 2 N/A** (13 direct checks); **undetermined**, not failed |
-| **2 — Proposed contracts** | Can the selected missing I2–I4 coordination rules work in a logical model? | `test_proposed_contracts.py` + three `proposed_*_test_results.csv` files | **10/10 selected tests pass**; the separate proposed logical design scores **11 supported, 0 unresolved, 2 N/A** only within selected direct criteria |
+| **1 — Documentary R7 coverage (1.1)** | Are behaviour, interface and relevant state responsibilities sufficiently specified? | `evidence/r7_criterion_derivation.md` and `results/reference_requirement_coverage.csv` | Baseline and `C4_star_only`: **8 supported, 4 unresolved, 2 N/A** (14 direct checks); **9 + 3 + 2** for `C6_star_only` and `C4_C6_star`; **undetermined**, not failed |
+| **2 — Proposed contracts** | Can the selected missing I2–I4 coordination rules work in a logical model? | `test_proposed_contracts.py` + three `proposed_*_test_results.csv` files | **10/10 selected tests pass**; the separate proposed logical design scores **12 supported, 0 unresolved, 2 N/A** only within selected direct criteria |
 | **3 — Controlled variants (1.2)** | Do C4*/C6* improve selected outcomes when identical contracts are held fixed? | `compare_r7_controlled.py` and `results/r7_controlled_comparison.md` | Shared availability: baseline **8/8**, combined refined **8/8**. Restrictive ATAM-informed sensitivity assumption: baseline **2/8**, refined **8/8** |
 
-**Important distinction:** The **8/3/2 are documentary *criteria***, the **10/10 are proposed contract *tests***, and the **8/8 are variation *cases***. Do not merge them into one score. The controlled comparator **reuses** the original variation runner; it is **not** an independent second experiment.
+**Important distinction:** The **8/4/2 are documentary *criteria***, the **10/10 are proposed contract *tests***, and the **8/8 are variation *cases***. Do not merge them into one score. The controlled comparator **reuses** the original variation runner; it is **not** an independent second experiment.
 
 ## Interpretation and limitations 
 

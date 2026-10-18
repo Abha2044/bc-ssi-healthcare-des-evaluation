@@ -8,14 +8,14 @@ Paths in code ticks are relative to `part1_architecture_validation/`. Start with
 
 | Result | What is counted | Main file | Interpretation |
 | --- | --- | --- | --- |       
-| **8 supported + 3 unresolved + 2 N/A** | 13 **direct documentary assessment criteria** | `results/reference_requirement_coverage.csv` | Published baseline and ATAM-only configurations remain **undetermined** |
+| **8 supported + 4 unresolved + 2 N/A** (baseline; **9 + 3 + 2** with C6\*) | 14 **direct documentary assessment criteria** | `results/reference_requirement_coverage.csv` | Published baseline and ATAM-only configurations remain **undetermined** |
 | **1 supported + 2 unresolved** | 3 **supplementary audit criteria** | `results/reference_supporting_flow_coverage.csv` and `reference_criterion_assessment.csv` | Kept separate from direct R7 criteria |
 | **10/10 PASS** | 10 **selected executable test examples** | three `results/proposed_*_test_results.csv` files | Tests an explicitly **proposed logical realization**, not historical baseline software |  
 | **8/8 vs 2/8** | 8 **variation cases** in two assumption profiles | `results/r7_controlled_comparison_summary.csv` | **Conditional** functional result, not measured reliability/uptime |
 
-The 13+3 criteria are **analyst-derived and manually reviewed** from Appendix B's R7 flow and Appendix A's state/component descriptions. The Python aggregation does not discover the original verdicts or prove the assessed architecture was implemented.
+The 14+3 criteria are **analyst-derived and manually reviewed** from Appendix B's R7 flow and Appendix A's state/component descriptions. The Python aggregation does not discover the original verdicts or prove the assessed architecture was implemented.
 
-## A. The exact 13 direct R7 criteria
+## A. The exact 14 direct R7 criteria
 
 **Source:** `models/r7_reference_assessment.json`, array `checks`; corresponding source interactions and evidence thresholds: `evidence/r7_criterion_derivation.md`. **Read the actual baseline verdict and rationale:** `results/reference_criterion_assessment.csv` (filter `configuration = baseline`).
 
@@ -24,7 +24,8 @@ The 13+3 criteria are **analyst-derived and manually reviewed** from Appendix B'
 | `C4-DECISION` | C4 returns permit/deny from access/policy/consent context | **Supported** | Appendix B §A R7 / Table C R7 |
 | `C4-OBLIGATIONS` | C4 returns restrictions/obligations with decision | **Supported** | Appendix B §A R7 / Table C R7 |
 | `C6-DECISION` | C6 follows permit/deny as PEP | **Supported** | Appendix B §A R7 / Table C R7 |
-| `C6-OBLIGATIONS` | C6 has masking/filtering enforcement responsibility | **Supported** | Appendix B §A R7 / Table C R7 |
+| `C6-OBLIGATIONS-ASSIGNED` | C6 has masking/filtering enforcement responsibility | **Supported** | Appendix B §A R7 / Table C R7 |
+| `C6-OBLIGATIONS-MECHANISM` | A mechanism applying masking/filtering is specified at C6 | **Unresolved** | Appendix A Table A-0: C6.6 specified but not enforced at any gateway instance |
 | `C15-SCOPE` | C15 participates in scoped FHIR retrieval/filtering | **Supported** | Appendix B §A R7 / Table C R7 |
 | `I1-REQUEST` | C6 gives C4 subject/resource/action/purpose/consent context | **Supported** | Appendix B §A R7 / Table C R7 |
 | `I2-RESPONSE` | C4→C6 consistent obligation meaning, targets, failure handling | **Unresolved** | Appendix B mentions obligations but lacks this detailed assurance |
@@ -35,11 +36,13 @@ The 13+3 criteria are **analyst-derived and manually reviewed** from Appendix B'
 | `STATE-REQUEST` | Persistent session/request state in this single-request pilot | **Not applicable** | Assessor's single-request scope decision |
 | `STATE-CONSENT-COORDINATION` | Mid-request consent change propagation in fixed-snapshot pilot | **Not applicable** | Assessor's fixed-consent scope decision |
 
-**Total:** 5 supported behaviours + 1 supported interface + 2 supported state checks = **8 supported**; I2/I3/I4 = **3 unresolved**; two state exclusions = **2 N/A**. Zero are marked unsupported. *Undetermined ≠ demonstrated failure.*
+**Total (baseline):** 5 supported behaviours + 1 supported interface + 2 supported state checks = **8 supported**; the C6 mechanism criterion plus I2/I3/I4 = **4 unresolved**; two state exclusions = **2 N/A**. Zero are marked unsupported. *Undetermined ≠ demonstrated failure.*
 
-**Why these 13 are aggregated:** `models/r7_reference_assessment.json` contains two entries in `capabilities`, with `mandatory_checks` arrays. Their **union** gives the 13 direct checks. The audit checks are instead listed in `supplementary_flow_checks`.
+**C6\* closes one of these.** `C6-OBLIGATIONS-MECHANISM` is `supported` under `C6_star_only` and `C4_C6_star`, giving those configurations **9 supported, 3 unresolved, 2 N/A**. The overall verdict stays `undetermined`, because the three that decide it are interfaces and both refinements are internal to a single component.
 
-## B. Three supplementary R7 audit checks (not included in 8/3/2)
+**Why these 13 are aggregated:** `models/r7_reference_assessment.json` contains two entries in `capabilities`, with `mandatory_checks` arrays. Their **union** gives the 14 direct checks. The audit checks are instead listed in `supplementary_flow_checks`.
+
+## B. Three supplementary R7 audit checks (not included in the direct count)
 
 | Check | Evidence / uncertainty | Verdict |
 | --- | --- | --- |
@@ -112,11 +115,10 @@ verdict because a test passed.
 
 ### C.3 Reading the result
 
-Baseline and ATAM-only configurations: **8 supported, 3 unresolved, 2 N/A**.
+Baseline and `C4_star_only`: **8 supported, 4 unresolved, 2 N/A**. `C6_star_only` and `C4_C6_star`: **9 supported, 3 unresolved, 2 N/A** — C6\* closes the C6 mechanism criterion.
 The 8 are behaviour and state; all 3 unresolved are interfaces (I2, I3, I4).
 
-The separate `R7_proposed_logical_design` reaches **11 supported, 0 unresolved,
-2 N/A** within the same 13 direct checks, because it supplies explicit I2/I3/I4
+The separate `R7_proposed_logical_design` reaches **12 supported, 0 unresolved, 2 N/A** within the same 14 direct checks, because it supplies explicit I2/I3/I4
 rules. That does **not** change the published baseline's verdict.
 
 **The finding:** 1.1 locates the deficiency at the interfaces between components,
@@ -199,4 +201,4 @@ C4*-only = 3/8 and C6*-only = 2/8 in the restrictive profile (see original varia
 
 **Repository note:** The result files cited above are committed. They were previously untracked - not ignored, simply never added - so earlier clones of this repository did not contain them. Re-running the scripts regenerates them identically; `git status results/` should report no modifications after a clean run.
 
-**One-sentence handoff:** *Part 1 documents 13 direct R7 checks (8 supported, 3 unresolved, 2 outside pilot), provides 10 selected proposed logical tests, and compares baseline/refined functional behaviour under two declared availability assumptions; the evidence is not a real implementation or an independent demonstration that the baseline fails R7.*
+**One-sentence handoff:** *Part 1 documents 14 direct R7 checks (baseline: 8 supported, 4 unresolved, 2 outside pilot; 9/3/2 with C6\*), provides 10 selected proposed logical tests, and compares baseline/refined functional behaviour under two declared availability assumptions; the evidence is not a real implementation or an independent demonstration that the baseline fails R7.*

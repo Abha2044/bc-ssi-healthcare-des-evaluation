@@ -26,11 +26,11 @@ Steps 5–7 read CSVs that steps 1–2 write, so the order matters.
 Step 5 prints:
 
 ```
-baseline                   : undetermined (8 supported, 0 unsupported, 3 unresolved)
-C4_star_only               : undetermined (8 supported, 0 unsupported, 3 unresolved)
-C6_star_only               : undetermined (8 supported, 0 unsupported, 3 unresolved)
-C4_C6_star                 : undetermined (8 supported, 0 unsupported, 3 unresolved)
-R7_proposed_logical_design : full         (11 supported, 0 unsupported, 0 unresolved)
+baseline                   : undetermined (8 supported, 0 unsupported, 4 unresolved)
+C4_star_only               : undetermined (8 supported, 0 unsupported, 4 unresolved)
+C6_star_only               : undetermined (9 supported, 0 unsupported, 3 unresolved)
+C4_C6_star                 : undetermined (9 supported, 0 unsupported, 3 unresolved)
+R7_proposed_logical_design : full         (12 supported, 0 unsupported, 0 unresolved)
 ```
 
 **The refinement does not improve documentary coverage.** The three unresolved

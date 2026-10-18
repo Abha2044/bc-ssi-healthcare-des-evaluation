@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TD
   A[Appendix B: R7] --> B[Map C4, C6, C15 and supporting C5]
-  B --> C[Evaluate 13 direct R7 checks]
+  B --> C[Evaluate 14 direct R7 checks]
   C --> D[Identify I2/I3/I4 as unresolved]
   D --> E[Appendix A: G2/G3 suggest C4* and C6*]
   E --> F[Test proposed I2/I3/I4 contracts]
@@ -15,7 +15,7 @@ flowchart TD
 
 | Evidence | What we found | Meaning |
 |---|---|---|
-| **1.1 Documentary coverage** | Baseline and ATAM-only refinements: **8 supported, 3 unresolved, 2 not applicable** | R7 coverage **undetermined**, not proven failure |
+| **1.1 Documentary coverage** | Baseline and C4\*-only: **8 supported, 4 unresolved, 2 N/A**; with C6\*: **9 + 3 + 2** | R7 coverage **undetermined**, not proven failure |
 | **Proposed I2–I4 contracts** | **10/10** selected logical tests passed | Proposed design supports **11/11 applicable direct criteria**; not a tested real gateway |
 | **1.2 Controlled comparison** | With both mechanisms assumed available: **8/8 baseline = 8/8 refined** | Refinement names alone do not improve the selected model |
 | **Sensitivity scenario** | If baseline preparation/enforcement are **assumed unavailable**: baseline **2/8**, refined **8/8** | **Conditional** advantage only; assumptions are **not** measured outages |
