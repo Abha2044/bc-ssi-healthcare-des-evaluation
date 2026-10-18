@@ -10,6 +10,8 @@ import csv
 import json
 from pathlib import Path
 
+from modelio import load_components
+
 
 def read_json(path):
     """Read one JSON file and reject duplicate keys."""
@@ -65,7 +67,7 @@ def aggregate_status(statuses):
 def validate(models, results):
     # 1. Read the checklist, inventory, required flow and semantic mappings.
     requirements = indexed(read_json(models / "requirements.json")["requirements"], "requirement")
-    components = indexed(read_json(models / "baseline_components.json")["components"], "component")
+    components = indexed(load_components(models), "component")
     flows = indexed(read_json(models / "flows.json")["flows"], "flow")
     mappings = read_json(models / "capability_mappings.json")
     require("R7" in requirements, "R7 is missing from requirements.json.")
