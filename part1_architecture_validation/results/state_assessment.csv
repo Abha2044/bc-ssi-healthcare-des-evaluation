@@ -1,0 +1,5 @@
+requirement,check,information,component,subcomponent,applicability,documented_ownership,evidence_refs,ownership_assurance,implementation_status,boundary
+R7,STATE-POLICY,Policy definitions,C4,C4.2,supporting_flow_state,C4.2 is the named policy registry.,"Appendix_A_corrected(1).docx, Table A-0",documented_assignment,not_assessed,Actual storage and consistency are not tested.
+R7,STATE-CONSENT,Current consent state,C4,C4.2,supporting_flow_state,C4.2 holds current consent.,"Appendix_A_corrected(1).docx, Section A.0 consent-role clarification",documented_assignment,not_assessed,Consent synchronization is not tested.
+R7,STATE-CREDENTIAL,Consent credentials and revocation status,C14,,conditional_on_consent_credential_path,C14 manages consent credentials and status.,"Appendix_A_corrected(1).docx, Section A.0 consent-role clarification",documented_assignment,not_assessed,C14 is relevant only when using the credential path.
+R7,STATE-REQUEST,Decision and obligations for the current request,C6,,request_local_context,No persistent owner is claimed.,,no_persistent_owner_asserted,not_assessed,A temporary request does not require a stored session.
