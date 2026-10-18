@@ -1,2 +1,0 @@
-requirement,required_capabilities,documented_capabilities,documented_behaviour_status,confirmed_covered,confirmed_missing,undetermined,classification,scope
-R7,2,2,documented,0,0,2,undetermined,"Documented conceptual design, based on supplied citations; source truth, contract compatibility, state ownership and implementation are not automatically verified."
