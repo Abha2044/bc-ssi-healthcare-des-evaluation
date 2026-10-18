@@ -1,0 +1,6 @@
+configuration,configuration_evidence_type,requirement,assessment_target,coverage,supported_checks,unsupported_checks,unresolved_checks,not_applicable_checks,implementation_assurance
+baseline,documented_baseline_design,R7,conceptual_reference_architecture,undetermined,8,0,3,2,not_assessed
+C4_star_only,atam_derived_refinement,R7,conceptual_reference_architecture,undetermined,8,0,3,2,not_assessed
+C6_star_only,atam_derived_refinement,R7,conceptual_reference_architecture,undetermined,8,0,3,2,not_assessed
+C4_C6_star,atam_derived_refinement,R7,conceptual_reference_architecture,undetermined,8,0,3,2,not_assessed
+R7_proposed_logical_design,proposed_design,R7,conceptual_reference_architecture,full,11,0,0,2,not_assessed

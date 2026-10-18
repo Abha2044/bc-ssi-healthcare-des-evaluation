@@ -1,0 +1,9 @@
+profile,configuration,cases,privacy_protected_cases,permit_cases,complete_permitted_delivery_cases,selection_cases,correct_selection_cases,accepted_cases,coverage_status,historical_baseline_coverage,evidence_origin,profile_rationale
+shared_responsibilities,baseline,8,8,5,5,3,3,8,not_inferred_from_test_count,undetermined,proposed_design_assumption,Assume all four configurations can prepare and enforce restrictions.
+shared_responsibilities,C4_star_only,8,8,5,5,3,3,8,not_inferred_from_test_count,undetermined,proposed_design_assumption,Assume all four configurations can prepare and enforce restrictions.
+shared_responsibilities,C6_star_only,8,8,5,5,3,3,8,not_inferred_from_test_count,undetermined,proposed_design_assumption,Assume all four configurations can prepare and enforce restrictions.
+shared_responsibilities,C4_C6_star,8,8,5,5,3,3,8,not_inferred_from_test_count,undetermined,proposed_design_assumption,Assume all four configurations can prepare and enforce restrictions.
+atam_informed_availability,baseline,8,8,5,0,3,0,2,not_inferred_from_test_count,undetermined,ATAM_informed_modeling_assumption,"Assume baseline preparation and enforcement are unavailable, based on ATAM concerns. This is not proven."
+atam_informed_availability,C4_star_only,8,8,5,0,3,3,3,not_inferred_from_test_count,undetermined,ATAM_informed_modeling_assumption,"Assume baseline preparation and enforcement are unavailable, based on ATAM concerns. This is not proven."
+atam_informed_availability,C6_star_only,8,8,5,0,3,0,2,not_inferred_from_test_count,undetermined,ATAM_informed_modeling_assumption,"Assume baseline preparation and enforcement are unavailable, based on ATAM concerns. This is not proven."
+atam_informed_availability,C4_C6_star,8,8,5,5,3,3,8,not_inferred_from_test_count,undetermined,ATAM_informed_modeling_assumption,"Assume baseline preparation and enforcement are unavailable, based on ATAM concerns. This is not proven."

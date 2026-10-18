@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "purpose": "Reviewable semantic mappings for the neutral R7 pilot;which compoponent behaviour contributes to requirement and what event support that evidence.",
+  "purpose": "Reviewable semantic mappings for the neutral R7 pilot: which component behaviour contributes to which requirement capability, and what evidence supports that claim. These mappings nominate evidence to assess; they do not encode coverage results.",
   "inputs": {
     "requirements": "requirements.json",
     "baseline_components": "baseline_components.json",
