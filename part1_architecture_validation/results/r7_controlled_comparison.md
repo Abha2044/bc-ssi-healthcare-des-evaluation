@@ -22,7 +22,7 @@
 | Availability profile | Baseline accepted | Refined accepted | Difference | Baseline complete permitted deliveries | Refined complete permitted deliveries | Privacy protected |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | `shared_responsibilities` | 8/8 | 8/8 | +0 cases | 5/5 | 5/5 | Baseline 8/8; refined 8/8 |
-| `atam_informed_availability` | 2/8 | 8/8 | +6 cases | 0/5 | 5/5 | Baseline 8/8; refined 8/8 |
+| `atam_informed_availability` | 3/8 | 8/8 | +5 cases | 0/5 | 5/5 | Baseline 8/8; refined 8/8 |
 
 **Interpretation:** The first profile is a control: if baseline mechanisms work, the model does not reveal a functional advantage from the starred names. The second profile asks what follows *if* the ATAM-reported mechanisms are unavailable in the baseline. It does not establish that they truly are unavailable.
 
@@ -33,7 +33,7 @@
 | Profile | Baseline | C4* only | C6* only | Both |
 | --- | ---: | ---: | ---: | ---: |
 | `shared_responsibilities` | 8/8 | 8/8 | 8/8 | 8/8 |
-| `atam_informed_availability` | 2/8 | 3/8 | 2/8 | 8/8 |
+| `atam_informed_availability` | 3/8 | 3/8 | 3/8 | 8/8 |
 
 ## Criterion-level and interface evidence
 
@@ -68,8 +68,8 @@ Run from repository root: `python part1_architecture_validation/compare_r7_contr
 Input fingerprints (first 12 hexadecimal characters of SHA-256):
 
 - `models/proposed_contracts.json`: `e56a082c8440`
-- `models/refined_variations.json`: `8531f8cbd2ff`
-- `run_r7_variation_experiment.py`: `85f9bf859be1`
-- `test_proposed_contracts.py`: `73898bcf68c2`
+- `models/refined_variations.json`: `9ea35eff2961`
+- `run_r7_variation_experiment.py`: `d88c3839514c`
+- `test_proposed_contracts.py`: `401f41ce02c2`
 
 Identical case/scope/oracle checks passed for 8 cases across all four configurations and both model profiles.

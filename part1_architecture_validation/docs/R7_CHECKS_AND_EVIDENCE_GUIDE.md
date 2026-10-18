@@ -197,6 +197,6 @@ C4*-only = 3/8 and C6*-only = 2/8 in the restrictive profile (see original varia
 6. **Proposed-model verdict:** `reference_criterion_assessment.csv`, `configuration=R7_proposed_logical_design`, `check=I2-RESPONSE` → **supported** within the selected proposed scope.
 7. **Limitation:** This cannot be transferred to the original baseline as proof of deployed component compatibility.
 
-**Repository caution:** Git ignores most `results/` files by default. The three `r7_controlled_comparison*` files were explicitly committed in `fef794a`; regenerate or explicitly stage other result CSVs if missing on GitHub.
+**Repository note:** The result files cited above are committed. They were previously untracked - not ignored, simply never added - so earlier clones of this repository did not contain them. Re-running the scripts regenerates them identically; `git status results/` should report no modifications after a clean run.
 
 **One-sentence handoff:** *Part 1 documents 13 direct R7 checks (8 supported, 3 unresolved, 2 outside pilot), provides 10 selected proposed logical tests, and compares baseline/refined functional behaviour under two declared availability assumptions; the evidence is not a real implementation or an independent demonstration that the baseline fails R7.*

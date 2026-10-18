@@ -212,8 +212,11 @@ def read_experiment_summary(path, variations):
         group = [r for r in rows if r['profile'] == profile_id]
         if {r['configuration'] for r in group} != configurations:
             raise ValueError('An experiment profile is missing a configuration.')
-    if len({(r['cases'], r['permit_cases'], r['selection_cases']) for r in rows}) != 1:
+    if len({(r['cases'], r['permit_cases']) for r in rows}) != 1:
         raise ValueError('Experiment configurations do not use equal case counts.')
+    # selection_cases is deliberately not compared here. A configuration where
+    # preparation is assumed unavailable does not assess selection at all, so it
+    # reports 0 assessed rather than 3 failures. Equal `cases` is the fairness check.
     return rows
 
 

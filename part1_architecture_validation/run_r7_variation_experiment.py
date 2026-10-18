@@ -73,7 +73,9 @@ def execute_case(case, source, c4_available, c6_available):
         validate_response(response)
     trace = {'c15_called': False, 'retrieved_records': []}
     if response['decision'] == 'permit' and response['obligations'] and not c4_available:
-        return ({'outcome': 'preparation_blocked', 'released_records': []}, None,
+        # The response was derived correctly; the assumption discards it rather
+        # than disputing it. Return it so selection is reported as not assessed.
+        return ({'outcome': 'preparation_blocked', 'released_records': []}, response,
                 trace, 'Assumed preparation unavailable; no disclosure.')
     if response['decision'] == 'permit' and response['obligations'] and not c6_available:
         return ({'outcome': 'enforcement_blocked', 'released_records': []}, response,
@@ -150,12 +152,27 @@ def run(contracts_path, variations_path, results_directory, selected_profile='al
                 actual, response, trace, reason = execute_case(case, source, c4_available, c6_available)
                 expected = case['expected_result']
                 prohibited, delivery = assess_disclosure(actual, expected)
-                accepted = (actual == expected or (
-                    expected['outcome'] == 'enforcement_blocked'
+                exact = actual == expected
+                blocked_other_cause = (not exact
+                    and expected['outcome'] == 'enforcement_blocked'
                     and actual['outcome'] in ('preparation_blocked', 'enforcement_blocked')
-                    and actual['released_records'] == []))
-                selection_result = ('not_assessed_supplied_decision' if not case.get('selection_inputs')
-                                    else 'PASS' if response == case['expected_c4_response'] else 'FAIL')
+                    and actual['released_records'] == [])
+                accepted = exact or blocked_other_cause
+                # A case that blocks for an unrelated reason did not exercise the
+                # condition it was written for. Report that rather than hide it.
+                basis = ('exact_match' if exact
+                         else 'blocked_as_expected_different_cause' if blocked_other_cause
+                         else 'not_accepted')
+                if not case.get('selection_inputs'):
+                    selection_result = 'not_assessed_supplied_decision'
+                elif actual['outcome'] == 'preparation_blocked':
+                    # Preparation was assumed unavailable, so this run does not
+                    # assess whether the selection would have been correct.
+                    selection_result = 'not_assessed_preparation_unavailable'
+                elif response == case['expected_c4_response']:
+                    selection_result = 'PASS'
+                else:
+                    selection_result = 'FAIL'
                 if selection_result == 'FAIL':
                     accepted = False
                 row = {
@@ -163,6 +180,7 @@ def run(contracts_path, variations_path, results_directory, selected_profile='al
                     'profile_evidence_type': profile['evidence_type'], 'test': case['id'], 'name': case['name'],
                     'c4_preparation_available': c4_available, 'c6_enforcement_available': c6_available,
                     'c4_selection_result': selection_result,
+                    'acceptance_basis': basis,
                     'expected_c4_response': json.dumps(case.get('expected_c4_response'), sort_keys=True),
                     'actual_c4_response': json.dumps(response, sort_keys=True),
                     'actual_outcome': actual['outcome'], 'c15_called': trace['c15_called'],
@@ -186,6 +204,9 @@ def run(contracts_path, variations_path, results_directory, selected_profile='al
                 'selection_cases': sum(r['c4_selection_result'] in ('PASS', 'FAIL') for r in group),
                 'correct_selection_cases': sum(r['c4_selection_result'] == 'PASS' for r in group),
                 'accepted_cases': sum(r['case_acceptance'] == 'PASS' for r in group),
+                'accepted_by_exact_match': sum(r['acceptance_basis'] == 'exact_match' for r in group),
+                'accepted_by_unrelated_block': sum(
+                    r['acceptance_basis'] == 'blocked_as_expected_different_cause' for r in group),
                 'coverage_status': 'not_inferred_from_test_count',
                 'historical_baseline_coverage': 'undetermined',
                 'evidence_origin': profile['evidence_type'], 'profile_rationale': profile['rationale'],

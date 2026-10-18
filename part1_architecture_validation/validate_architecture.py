@@ -222,7 +222,12 @@ def validate(models, results):
         ]
         # A supporting filter is not counted as a complete obligation provider.
         provider_status = "documented" if "documented" in candidate_statuses else "undetermined"
-        step_status = aggregate_status([r["behaviour_evidence_status"] for r in contributions])
+        # Only the steps belonging to this capability's candidate providers.
+        # Aggregating over every step let an unrelated step - including a
+        # supplementary audit step - mark both R7 capabilities undetermined.
+        provider_components = {c["component_id"] for c in mapping["candidate_providers"]}
+        step_status = aggregate_status([r["behaviour_evidence_status"] for r in contributions
+                                        if r["component"] in provider_components])
         design_status = aggregate_status([provider_status, step_status])
         selected_interfaces = [r for r in interface_rows
                                if r["interaction"] in mapping["required_interaction_ids"]]

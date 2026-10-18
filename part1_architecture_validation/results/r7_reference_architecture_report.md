@@ -113,9 +113,9 @@ Source: r7_variation_experiment_summary.csv. The figures below are read from the
 | shared_responsibilities | C4_star_only | 8/8 | 5/5 | 3/3 | 8/8 |
 | shared_responsibilities | C6_star_only | 8/8 | 5/5 | 3/3 | 8/8 |
 | shared_responsibilities | C4_C6_star | 8/8 | 5/5 | 3/3 | 8/8 |
-| atam_informed_availability | baseline | 2/8 | 0/5 | 0/3 | 8/8 |
+| atam_informed_availability | baseline | 3/8 | 0/5 | 0/0 | 8/8 |
 | atam_informed_availability | C4_star_only | 3/8 | 0/5 | 3/3 | 8/8 |
-| atam_informed_availability | C6_star_only | 2/8 | 0/5 | 0/3 | 8/8 |
+| atam_informed_availability | C6_star_only | 3/8 | 0/5 | 0/0 | 8/8 |
 | atam_informed_availability | C4_C6_star | 8/8 | 5/5 | 3/3 | 8/8 |
 
 C4 selection is assessed only in the policy/consent-derived cases; supplied-decision cases do not assess selection. Accepted cases satisfy the selected response expectations and, where applicable, selection expectations. Privacy protection alone does not imply correct permitted delivery: blocked authorized requests remain incomplete delivery.

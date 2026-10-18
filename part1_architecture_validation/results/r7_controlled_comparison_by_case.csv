@@ -13,5 +13,5 @@ atam_informed_availability,R7-T3,Date filtering excludes older record,verified_e
 atam_informed_availability,R7-T4,Unsupported obligation blocks disclosure,verified_equal,False,False,True,True,preparation_blocked,enforcement_blocked,PASS,PASS,not_applicable,not_applicable,True,True
 atam_informed_availability,R7-T5,Mask and date filter apply together,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
 atam_informed_availability,R7-V6,Apply both restrictions to allowed records,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
-atam_informed_availability,R7-V7,Block access if scope is missing,verified_equal,False,False,True,True,preparation_blocked,enforcement_blocked,FAIL,PASS,not_applicable,not_applicable,True,True
+atam_informed_availability,R7-V7,Block access if scope is missing,verified_equal,False,False,True,True,preparation_blocked,enforcement_blocked,PASS,PASS,not_applicable,not_applicable,True,True
 atam_informed_availability,R7-V8,Return no records when scope is empty,verified_equal,False,False,True,True,preparation_blocked,permitted,FAIL,PASS,incomplete,complete,True,True
