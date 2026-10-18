@@ -49,9 +49,9 @@ The experiment evaluates bounded functional behaviour, **not** documentary requi
 
 | Configuration | Coverage | Supported | Unresolved | Not applicable |
 | --- | --- | ---: | ---: | ---: |
-| `baseline` | undetermined | 8 | 3 | 2 |
-| `C4_C6_star` | undetermined | 8 | 3 | 2 |
-| `R7_proposed_logical_design` | full | 11 | 0 | 2 |
+| `baseline` | undetermined | 8 | 4 | 2 |
+| `C4_C6_star` | undetermined | 9 | 3 | 2 |
+| `R7_proposed_logical_design` | full | 12 | 0 | 2 |
 
 ## What this design does *not* prove
 

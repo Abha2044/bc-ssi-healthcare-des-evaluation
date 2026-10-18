@@ -1,8 +1,8 @@
 configuration,configuration_evidence_type,requirement,capability,coverage,unresolved_checks,unsupported_checks
 baseline,documented_baseline_design,R7,enforce_need_to_know_decision,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
-baseline,documented_baseline_design,R7,enforce_disclosure_obligations,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
+baseline,documented_baseline_design,R7,enforce_disclosure_obligations,undetermined,C6-OBLIGATIONS-MECHANISM|I2-RESPONSE|I3-SCOPE|I4-DATA,
 C4_star_only,atam_derived_refinement,R7,enforce_need_to_know_decision,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
-C4_star_only,atam_derived_refinement,R7,enforce_disclosure_obligations,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
+C4_star_only,atam_derived_refinement,R7,enforce_disclosure_obligations,undetermined,C6-OBLIGATIONS-MECHANISM|I2-RESPONSE|I3-SCOPE|I4-DATA,
 C6_star_only,atam_derived_refinement,R7,enforce_need_to_know_decision,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
 C6_star_only,atam_derived_refinement,R7,enforce_disclosure_obligations,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,
 C4_C6_star,atam_derived_refinement,R7,enforce_need_to_know_decision,undetermined,I2-RESPONSE|I3-SCOPE|I4-DATA,

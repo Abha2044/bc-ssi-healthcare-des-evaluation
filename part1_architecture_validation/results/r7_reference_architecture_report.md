@@ -16,8 +16,8 @@ Descriptions come from refined_variations.json; interface criteria and uncertain
 | Architectural difference | Appendix A lists C4.1-C4.3, but not a named C4.4 Obligation Handler. Reported origin: ATAM-derived, not independently verified | add_subcomponent / C4.4 / Obligation Handler. Preparing restrictions is not the same as applying them. | Appendix A reports C6.6 specified but not active at every gateway. Reported origin: ATAM-derived, not independently verified | operationalise_specified_capability / C6.6 / Data Minimizer. The baseline already describes masking and filtering as C6 duties. |
 | Interfaces | Required interaction criteria (compatibility assessed separately): C6 sends request details to C4. / C4 and C6 agree on decision and restriction meanings. | C6 must understand the restrictions C4 sends; exact API is not specified. | Required interaction criteria (compatibility assessed separately): C6 sends request details to C4. / C4 and C6 agree on decision and restriction meanings. / C6 and C15 agree on which records can be returned. / Every restriction remains applied to the final response. / C6 sends C5 the information needed for audit. | C6 must understand restrictions and scope from C4/C15. |
 | State | Policy definitions: C4.2 is the named policy registry. Actual storage and consistency are not tested. / Current consent state: C4.2 holds current consent. Consent synchronization is not tested. | No new persistent state owner is established. | Decision and obligations for the current request: No persistent owner is claimed. A temporary request does not require a stored session. | This request does not imply persistent session state. |
-| Remaining uncertainty | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? / I3-SCOPE: Which restrictions belong to C6 or C15? \| How is the authorized record scope preserved? / I4-DATA: Can any restricted data reappear before release? / I5-AUDIT: What audit event does C6 send to C5? | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? / I3-SCOPE: Which restrictions belong to C6 or C15? \| How is the authorized record scope preserved? / I4-DATA: Can any restricted data reappear before release? / I5-AUDIT: What audit event does C6 send to C5? |
-| Configuration coverage | baseline: undetermined (8 supported, 3 unresolved). Whole configuration, not component-alone coverage. | C4_star_only: undetermined (8 supported, 3 unresolved). Whole configuration, not component-alone coverage. | baseline: undetermined (8 supported, 3 unresolved). Whole configuration, not component-alone coverage. | C6_star_only: undetermined (8 supported, 3 unresolved). Whole configuration, not component-alone coverage. |
+| Remaining uncertainty | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? | C6-OBLIGATIONS-MECHANISM: Which subcomponent performs the masking or filtering? \| Is that subcomponent present in the assessed baseline? / I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? / I3-SCOPE: Which restrictions belong to C6 or C15? \| How is the authorized record scope preserved? / I4-DATA: Can any restricted data reappear before release? / I5-AUDIT: What audit event does C6 send to C5? | I2-RESPONSE: Do C4 and C6 agree on restrictions? \| What happens if a restriction cannot be applied? / I3-SCOPE: Which restrictions belong to C6 or C15? \| How is the authorized record scope preserved? / I4-DATA: Can any restricted data reappear before release? / I5-AUDIT: What audit event does C6 send to C5? |
+| Configuration coverage | baseline: undetermined (8 supported, 4 unresolved). Whole configuration, not component-alone coverage. | C4_star_only: undetermined (8 supported, 4 unresolved). Whole configuration, not component-alone coverage. | baseline: undetermined (8 supported, 4 unresolved). Whole configuration, not component-alone coverage. | C6_star_only: undetermined (9 supported, 3 unresolved). Whole configuration, not component-alone coverage. |
 | Source basis | Requirements Appendix B, Section A R7 and Table C R7 / Appendix_A_corrected(1).docx, Table A-0 / Appendix_A_corrected(1).docx, Section A.0 consent-role clarification | Appendix_A_corrected(1).docx, Table A-11 / Appendix_A_corrected(1).docx, Table A-11.2 / Appendix_A_corrected(1).docx, Table A-13 | Requirements Appendix B, Section A R7 and Table C R7 / Appendix_A_corrected(1).docx, Table A-0 | Appendix_A_corrected(1).docx, Table A-11 / Appendix_A_corrected(1).docx, Table A-11.2 / Appendix_A_corrected(1).docx, Table A-12 |
 
 C4* and C6* columns describe each individual replacement. The combined configuration is assessed in the results below. The separately labelled proposed logical design contains additional rules and must not be treated as evidence of a refinement-only improvement.
@@ -26,11 +26,11 @@ C4* and C6* columns describe each individual replacement. The combined configura
 
 | Configuration | Evidence type | Coverage | Supported | Unsupported | Unresolved | Not applicable |
 | --- | --- | --- | --- | --- | --- | --- |
-| baseline | documented_baseline_design | undetermined | 8 | 0 | 3 | 2 |
-| C4_star_only | atam_derived_refinement | undetermined | 8 | 0 | 3 | 2 |
-| C6_star_only | atam_derived_refinement | undetermined | 8 | 0 | 3 | 2 |
-| C4_C6_star | atam_derived_refinement | undetermined | 8 | 0 | 3 | 2 |
-| R7_proposed_logical_design | proposed_design | full | 11 | 0 | 0 | 2 |
+| baseline | documented_baseline_design | undetermined | 8 | 0 | 4 | 2 |
+| C4_star_only | atam_derived_refinement | undetermined | 8 | 0 | 4 | 2 |
+| C6_star_only | atam_derived_refinement | undetermined | 9 | 0 | 3 | 2 |
+| C4_C6_star | atam_derived_refinement | undetermined | 9 | 0 | 3 | 2 |
+| R7_proposed_logical_design | proposed_design | full | 12 | 0 | 0 | 2 |
 
 Reviews are inherited from the shared assessment unless an explicit configuration override is supplied. Identical results therefore do not establish that baseline and refined implementations behave identically.
 
@@ -39,9 +39,9 @@ Reviews are inherited from the shared assessment unless an explicit configuratio
 | Configuration | Capability | Coverage | Unresolved checks |
 | --- | --- | --- | --- |
 | baseline | enforce_need_to_know_decision | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
-| baseline | enforce_disclosure_obligations | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
+| baseline | enforce_disclosure_obligations | undetermined | C6-OBLIGATIONS-MECHANISM\|I2-RESPONSE\|I3-SCOPE\|I4-DATA |
 | C4_star_only | enforce_need_to_know_decision | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
-| C4_star_only | enforce_disclosure_obligations | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
+| C4_star_only | enforce_disclosure_obligations | undetermined | C6-OBLIGATIONS-MECHANISM\|I2-RESPONSE\|I3-SCOPE\|I4-DATA |
 | C6_star_only | enforce_need_to_know_decision | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
 | C6_star_only | enforce_disclosure_obligations | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
 | C4_C6_star | enforce_need_to_know_decision | undetermined | I2-RESPONSE\|I3-SCOPE\|I4-DATA |
@@ -59,12 +59,12 @@ Each result concerns that component’s assigned checks, not its ability to sati
 | baseline | C15 | undetermined | 2 |
 | baseline | C4 | undetermined | 1 |
 | baseline | C5 | undetermined | 2 |
-| baseline | C6 | undetermined | 4 |
+| baseline | C6 | undetermined | 5 |
 | C4_star_only | C14 | not_applicable | 0 |
 | C4_star_only | C15 | undetermined | 2 |
 | C4_star_only | C4 | undetermined | 1 |
 | C4_star_only | C5 | undetermined | 2 |
-| C4_star_only | C6 | undetermined | 4 |
+| C4_star_only | C6 | undetermined | 5 |
 | C6_star_only | C14 | not_applicable | 0 |
 | C6_star_only | C15 | undetermined | 2 |
 | C6_star_only | C4 | undetermined | 1 |
@@ -100,7 +100,7 @@ This supplied interpretation is not independently reproduced gap evidence.
 | ATAM gap | Interpretation |
 | --- | --- |
 | G2 | C4* adds a named handler, but baseline already documents obligations. |
-| G3 | C6* makes enforcement explicit, but baseline already documents filtering. |
+| G3 | Appendix B assigns masking and filtering to C6, and Table A-0 states the C6.6 minimiser is not enforced at any gateway instance. The two statements are now assessed separately by C6-OBLIGATIONS-ASSIGNED and C6-OBLIGATIONS-MECHANISM. C6* changes the second. |
 |  | I2, I3 and I4 are still unclear in baseline evidence; this is not a newly proven gap. |
 
 ## R7 executable variation comparison
@@ -147,7 +147,8 @@ This is a bounded functional experiment, not DES or a performance measurement. T
 | C4-DECISION | behaviour | supported | shared_assessment | Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
 | C4-OBLIGATIONS | behaviour | supported | shared_assessment | Appendix B says C4 returns obligations with its decision. It does not prove every rule is selected correctly. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C6-DECISION | behaviour | supported | shared_assessment | Appendix B describes permitted access and denial through C6. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
-| C6-OBLIGATIONS | behaviour | supported | shared_assessment | Appendix B assigns masking and filtering to C6. Full execution is assessed separately. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
+| C6-OBLIGATIONS-ASSIGNED | behaviour | supported | shared_assessment | Appendix B assigns masking and filtering to C6. Full execution is assessed separately. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
+| C6-OBLIGATIONS-MECHANISM | behaviour | undetermined | shared_assessment | Table A-0 states that the C6.6 Data Minimizer is specified as a Privacy &amp; Policy responsibility but not enforced at any gateway instance, and lists no other C6 subcomponent performing masking or filtering. The responsibility is assigned; the mechanism is not established. | Appendix_A_corrected.docx, Table A-0, C6 deployment column | Which subcomponent performs the masking or filtering? \| Is that subcomponent present in the assessed baseline? |
 | C15-SCOPE | behaviour | supported | shared_assessment | Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C5-AUDIT | behaviour | supported | shared_assessment | Appendix B assigns access logging to C5; detailed enforcement logs are not proven. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | I1-REQUEST | interface | supported | shared_assessment | Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
@@ -168,7 +169,8 @@ This is a bounded functional experiment, not DES or a performance measurement. T
 | C4-DECISION | behaviour | supported | shared_assessment | Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
 | C4-OBLIGATIONS | behaviour | supported | configuration_override | C4* adds the named C4.4 handler. That clarifies who prepares restrictions, not whether C6 understands them. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
 | C6-DECISION | behaviour | supported | shared_assessment | Appendix B describes permitted access and denial through C6. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
-| C6-OBLIGATIONS | behaviour | supported | shared_assessment | Appendix B assigns masking and filtering to C6. Full execution is assessed separately. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
+| C6-OBLIGATIONS-ASSIGNED | behaviour | supported | shared_assessment | Appendix B assigns masking and filtering to C6. Full execution is assessed separately. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
+| C6-OBLIGATIONS-MECHANISM | behaviour | undetermined | shared_assessment | Table A-0 states that the C6.6 Data Minimizer is specified as a Privacy &amp; Policy responsibility but not enforced at any gateway instance, and lists no other C6 subcomponent performing masking or filtering. The responsibility is assigned; the mechanism is not established. | Appendix_A_corrected.docx, Table A-0, C6 deployment column | Which subcomponent performs the masking or filtering? \| Is that subcomponent present in the assessed baseline? |
 | C15-SCOPE | behaviour | supported | shared_assessment | Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C5-AUDIT | behaviour | supported | shared_assessment | Appendix B assigns access logging to C5; detailed enforcement logs are not proven. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | I1-REQUEST | interface | supported | shared_assessment | Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
@@ -189,7 +191,8 @@ This is a bounded functional experiment, not DES or a performance measurement. T
 | C4-DECISION | behaviour | supported | shared_assessment | Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
 | C4-OBLIGATIONS | behaviour | supported | shared_assessment | Appendix B says C4 returns obligations with its decision. It does not prove every rule is selected correctly. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C6-DECISION | behaviour | supported | shared_assessment | Appendix B describes permitted access and denial through C6. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
-| C6-OBLIGATIONS | behaviour | supported | configuration_override | C6* makes C6.6 operationally explicit; the baseline already documents filtering. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-ASSIGNED | behaviour | supported | configuration_override | C6* makes C6.6 operationally explicit; the baseline already documents filtering. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-MECHANISM | behaviour | supported | configuration_override | C6* names C6.6 Data Minimizer as available at each gateway instance. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-12 |  |
 | C15-SCOPE | behaviour | supported | shared_assessment | Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C5-AUDIT | behaviour | supported | shared_assessment | Appendix B assigns access logging to C5; detailed enforcement logs are not proven. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | I1-REQUEST | interface | supported | shared_assessment | Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
@@ -210,7 +213,8 @@ This is a bounded functional experiment, not DES or a performance measurement. T
 | C4-DECISION | behaviour | supported | shared_assessment | Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
 | C4-OBLIGATIONS | behaviour | supported | configuration_override | C4* adds the named C4.4 handler. Shared meaning with C6 is still open. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
 | C6-DECISION | behaviour | supported | shared_assessment | Appendix B describes permitted access and denial through C6. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
-| C6-OBLIGATIONS | behaviour | supported | configuration_override | C6* makes C6.6 operationally explicit; contract meaning is still unproven. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-ASSIGNED | behaviour | supported | configuration_override | C6* makes C6.6 operationally explicit; contract meaning is still unproven. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-MECHANISM | behaviour | supported | configuration_override | C6* names C6.6 Data Minimizer as available at each gateway instance. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-12 |  |
 | C15-SCOPE | behaviour | supported | shared_assessment | Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C5-AUDIT | behaviour | supported | shared_assessment | Appendix B assigns access logging to C5; detailed enforcement logs are not proven. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | I1-REQUEST | interface | supported | shared_assessment | Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
@@ -231,7 +235,8 @@ This is a bounded functional experiment, not DES or a performance measurement. T
 | C4-DECISION | behaviour | supported | shared_assessment | Appendix B assigns policy and consent decisions to C4. This documents the role, not the running code. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
 | C4-OBLIGATIONS | behaviour | supported | configuration_override | A fixed proposed policy and consent example produces the expected restrictions (T6). This is not a complete policy engine. | Requirements Appendix B, Section A R7 and Table C R7 \| refined_variations.json, proposed_selection_example \| test_proposed_contracts.py, derive_policy_response \| results/proposed_selection_test_results.csv, R7-T6 |  |
 | C6-DECISION | behaviour | supported | shared_assessment | Appendix B describes permitted access and denial through C6. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |
-| C6-OBLIGATIONS | behaviour | supported | configuration_override | C6* makes the enforcement role explicit; the proposed tests assess selected actions separately. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-ASSIGNED | behaviour | supported | configuration_override | C6* makes the enforcement role explicit; the proposed tests assess selected actions separately. | Appendix_A_corrected(1).docx, Table A-11.2 \| Appendix_A_corrected(1).docx, Table A-13 |  |
+| C6-OBLIGATIONS-MECHANISM | behaviour | supported | configuration_override | The proposed design specifies the masking and filtering rules and the blocking behaviour when an obligation cannot be applied. | proposed_contracts.json, CONTRACT-R7-I2 \| refined_variations.json, proposed_logical_rules.I2-RESPONSE \| test_proposed_contracts.py, enforce_reference |  |
 | C15-SCOPE | behaviour | supported | shared_assessment | Appendix B assigns scoped FHIR retrieval and filters to C15. Coordination with C6 still needs review. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | C5-AUDIT | behaviour | supported | shared_assessment | Appendix B assigns access logging to C5; detailed enforcement logs are not proven. | RequirementsAppendixB-refined(1).docx, Section A R7 \| RequirementsAppendixB-refined(1).docx, Table C R7 |  |
 | I1-REQUEST | interface | supported | shared_assessment | Appendix B specifies subject, resource, action, purpose and relevant consent in the policy flow. | Requirements Appendix B, Section A R7 \| Requirements Appendix B, Table C R7 |  |

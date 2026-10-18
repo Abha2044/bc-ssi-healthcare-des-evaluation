@@ -81,7 +81,7 @@ def main():
                     + "; combined " + ratio("C4_C6_star", "correct_selection_cases", "selection_cases")
                     + ". Baseline selection was blocked by the assumed unavailability, not shown incorrect.",
              missing="Demonstrate correct obligation selection and C4* provider behaviour independently."),
-        dict(q="Can C6 enforce the required restrictions?", check="C6-OBLIGATIONS",
+        dict(q="Can C6 enforce the required restrictions?", check="C6-OBLIGATIONS-MECHANISM",
              components="C6", gap="G3 (ATAM)",
              change="C6* operationalizes already-specified C6.6 minimization (Appendix A, A-11).",
              model_cases="R7-T2,R7-T3,R7-T5",

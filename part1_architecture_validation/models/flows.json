@@ -20,6 +20,9 @@
       "requirement_ids": [
         "R7"
       ],
+      "scenario": "S2",
+      "scenario_name": "Consent-Based Specialist Access",
+      "scenario_source": "all_requirement_assessment_tables.docx, requirement/scenario selection: R7 selected scenario S2 from S1, S2, S6, S8, S12, S13.",
       "control_domain": "privacy_and_policy",
       "source_text": "Intercept: C6 -> Decide: C6->C4 (subject/resource/action/purpose) -> Return decision+obligations: C4->C6 -> Enforce: C6 (mask/filter) + C15 (labels/filters) -> Audit: C5",
       "participants": [

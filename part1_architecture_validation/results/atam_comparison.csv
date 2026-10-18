@@ -1,4 +1,4 @@
 gap,interpretation,assessment_scope
 G2,"C4* adds a named handler, but baseline already documents obligations.",documentary_interpretation_not_independent_gap_reproduction
-G3,"C6* makes enforcement explicit, but baseline already documents filtering.",documentary_interpretation_not_independent_gap_reproduction
+G3,"Appendix B assigns masking and filtering to C6, and Table A-0 states the C6.6 minimiser is not enforced at any gateway instance. The two statements are now assessed separately by C6-OBLIGATIONS-ASSIGNED and C6-OBLIGATIONS-MECHANISM. C6* changes the second.",documentary_interpretation_not_independent_gap_reproduction
 ,"I2, I3 and I4 are still unclear in baseline evidence; this is not a newly proven gap.",documentary_interpretation_not_independent_gap_reproduction

@@ -126,12 +126,12 @@
       }
     },
     {
-      "id": "C6-OBLIGATIONS",
+      "id": "C6-OBLIGATIONS-ASSIGNED",
       "kind": "behaviour",
       "components": [
         "C6"
       ],
-      "criterion": "C6 applies masking and filtering before release.",
+      "criterion": "Responsibility for applying masking and filtering before release is assigned to C6.",
       "evidence_refs": [
         "Requirements Appendix B, Section A R7",
         "Requirements Appendix B, Table C R7"
@@ -172,6 +172,59 @@
           "supporting_evidence_refs": [
             "Appendix_A_corrected(1).docx, Table A-11.2",
             "Appendix_A_corrected(1).docx, Table A-13"
+          ]
+        }
+      }
+    },
+    {
+      "id": "C6-OBLIGATIONS-MECHANISM",
+      "kind": "behaviour",
+      "components": [
+        "C6"
+      ],
+      "criterion": "A mechanism that applies masking and filtering is specified at C6.",
+      "evidence_refs": [
+        "Appendix_A_corrected.docx, Table A-0, C6 deployment column"
+      ],
+      "open_questions": [
+        "Which subcomponent performs the masking or filtering?",
+        "Is that subcomponent present in the assessed baseline?"
+      ],
+      "assessment": {
+        "verdict": "undetermined",
+        "assessed_by": "Assistant documentary review; independent review pending",
+        "rationale": "Table A-0 states that the C6.6 Data Minimizer is specified as a Privacy & Policy responsibility but not enforced at any gateway instance, and lists no other C6 subcomponent performing masking or filtering. The responsibility is assigned; the mechanism is not established.",
+        "supporting_evidence_refs": [
+          "Appendix_A_corrected.docx, Table A-0, C6 deployment column"
+        ]
+      },
+      "configuration_overrides": {
+        "C6_star_only": {
+          "verdict": "supported",
+          "assessed_by": "Assistant documentary review; independent review pending",
+          "rationale": "C6* names C6.6 Data Minimizer as available at each gateway instance.",
+          "supporting_evidence_refs": [
+            "Appendix_A_corrected(1).docx, Table A-11.2",
+            "Appendix_A_corrected(1).docx, Table A-12"
+          ]
+        },
+        "C4_C6_star": {
+          "verdict": "supported",
+          "assessed_by": "Assistant documentary review; independent review pending",
+          "rationale": "C6* names C6.6 Data Minimizer as available at each gateway instance.",
+          "supporting_evidence_refs": [
+            "Appendix_A_corrected(1).docx, Table A-11.2",
+            "Appendix_A_corrected(1).docx, Table A-12"
+          ]
+        },
+        "R7_proposed_logical_design": {
+          "verdict": "supported",
+          "assessed_by": "Assistant bounded proposed-design review; independent review pending",
+          "rationale": "The proposed design specifies the masking and filtering rules and the blocking behaviour when an obligation cannot be applied.",
+          "supporting_evidence_refs": [
+            "proposed_contracts.json, CONTRACT-R7-I2",
+            "refined_variations.json, proposed_logical_rules.I2-RESPONSE",
+            "test_proposed_contracts.py, enforce_reference"
           ]
         }
       }
@@ -519,7 +572,8 @@
       "id": "enforce_disclosure_obligations",
       "mandatory_checks": [
         "C4-OBLIGATIONS",
-        "C6-OBLIGATIONS",
+        "C6-OBLIGATIONS-ASSIGNED",
+        "C6-OBLIGATIONS-MECHANISM",
         "C15-SCOPE",
         "I2-RESPONSE",
         "I3-SCOPE",
@@ -558,7 +612,7 @@
     },
     {
       "gap": "G3",
-      "interpretation": "C6* makes enforcement explicit, but baseline already documents filtering.",
+      "interpretation": "Appendix B assigns masking and filtering to C6, and Table A-0 states the C6.6 minimiser is not enforced at any gateway instance. The two statements are now assessed separately by C6-OBLIGATIONS-ASSIGNED and C6-OBLIGATIONS-MECHANISM. C6* changes the second.",
       "assessment_scope": "documentary_interpretation_not_independent_gap_reproduction"
     },
     {

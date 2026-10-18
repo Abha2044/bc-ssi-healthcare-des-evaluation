@@ -10,7 +10,7 @@ column states, in advance, what would count as settling it. Thresholds were
 fixed before the verdicts were recorded, so a verdict cannot be justified by
 whatever evidence happened to be available.
 
-**13 direct criteria** determine R7 coverage. **3 supplementary criteria are** reported separately.
+**14 direct criteria** determine R7 coverage. **3 supplementary criteria are** reported separately.
 
 ## Summary
 
@@ -19,7 +19,8 @@ whatever evidence happened to be available.
 | `C4-DECISION` | Direct | Decide need-to-know access | C4 | supported | supported | supported |
 | `C4-OBLIGATIONS` | Direct | Return mandatory restrictions with the decision | C4 | supported | supported | supported |
 | `C6-DECISION` | Direct | Enforce permit or deny | C6 | supported | supported | supported |
-| `C6-OBLIGATIONS` | Direct | Apply masking/filtering before disclosure | C6 | supported | supported | supported |
+| `C6-OBLIGATIONS-ASSIGNED` | Direct | Apply masking/filtering before disclosure | C6 | supported | supported | supported |
+| `C6-OBLIGATIONS-MECHANISM` | Direct | A mechanism that applies the restrictions | C6 | **unresolved** | supported | supported |
 | `C15-SCOPE` | Direct | Retrieve only authorized FHIR scope | C15 | supported | supported | supported |
 | `I1-REQUEST` | Direct | Supply inputs for access decisions | C6 ↔ C4 | supported | supported | supported |
 | `I2-RESPONSE` | Direct | Use a consistent decision/obligation contract | C4 ↔ C6 | **unresolved** | **unresolved** | supported |
@@ -67,13 +68,23 @@ whatever evidence happened to be available.
 - **C4\*+C6\* verdict:** supported
 - **Proposed design verdict:** supported
 
-#### `C6-OBLIGATIONS` — Apply masking/filtering before disclosure
+#### `C6-OBLIGATIONS-ASSIGNED` — Apply masking/filtering before disclosure
 
 - **Components:** C6
 - **Source interaction:** C4 obligations → C6 enforcement (B §A R7; B Table C R7)
 - **Why this is a criterion:** Permitted requests can still require restricted disclosure.
 - **Evidence threshold:** Documented enforcement responsibility; actual execution is tested separately.
 - **Baseline verdict:** supported
+- **C4\*+C6\* verdict:** supported
+- **Proposed design verdict:** supported
+
+#### `C6-OBLIGATIONS-MECHANISM` — A mechanism that applies the restrictions
+
+- **Components:** C6
+- **Source interaction:** Appendix A Table A-0, C6 deployment column
+- **Why this is a criterion:** Assigning the responsibility does not establish that a mechanism exists.
+- **Evidence threshold:** A named C6 subcomponent performing masking or filtering, present in the assessed baseline.
+- **Baseline verdict:** **unresolved**
 - **C4\*+C6\* verdict:** supported
 - **Proposed design verdict:** supported
 
