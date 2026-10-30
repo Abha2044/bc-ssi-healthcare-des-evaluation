@@ -12,7 +12,7 @@ Python 3.9+, no third-party packages. From this folder, in order:
 ```bash
 python test_proposed_contracts.py        # 1. run the proposed R7 model (T1–T10)
 python run_r7_variation_experiment.py    # 2. run it under 4 configurations x 2 profiles
-python validate_architecture.py          # 3. structural checks on the models
+python check_traceability.py          # 3. structural checks on the models
 python assess_variations.py              # 4. tabulate the documented variations
 python assess_reference_coverage.py      # 5. compute coverage  <- main result
 python compare_r7_controlled.py          # 6. controlled baseline vs refined

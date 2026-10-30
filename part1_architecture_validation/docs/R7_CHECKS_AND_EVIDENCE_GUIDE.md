@@ -94,7 +94,7 @@ omission is data for the next stage, not an oversight.
 ```text
 Appendix B (R7 flow) + Appendix A (C4.2 / C14 / state)
         |  criterion derivation -> evidence/r7_criterion_derivation.md
-models/r7_reference_assessment.json   16 checks, one recorded verdict each
+models/r7_reference_assessment.json   17 criteria (14 direct + 3 supplementary), with recorded assessment verdicts
         + models/refined_variations.json   configurations and overrides
         |  assess_reference_coverage.py : review(), classification(), run()
 results/reference_criterion_assessment.csv    one row per configuration x check
@@ -109,7 +109,7 @@ results/reference_supporting_flow_coverage.csv  audit, kept separate
 results/r7_reference_architecture_report.md
 ```
 
-Each of the 16 checks gets one of four verdicts — `supported`, `unsupported`,
+Each of the 17 criteria has a recorded baseline verdict, which may be overridden for a specific configuration when justified by evidence
 `undetermined`, `not_applicable`. `review()` **rejects** any determined verdict
 that lacks an assessor, a rationale and an evidence reference, so a citation on
 its own never produces a verdict. `classification()` then applies fixed rules:

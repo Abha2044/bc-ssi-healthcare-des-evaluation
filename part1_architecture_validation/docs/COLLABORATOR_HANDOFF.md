@@ -54,10 +54,10 @@ part1_architecture_validation/
     flows.json                        <-- who interacts with whom
     components/C*.json                <-- one file per component (Table A-0)
     capability_mappings.json          <-- the claims, each with a citation
-    r7_reference_assessment.json      <-- the 16 checks and their verdicts
+    r7_reference_assessment.json  <-- 14 direct + 3 supplementary criteria and recorded verdicts
     refined_variations.json           <-- what C4* and C6* change
     proposed_contracts.json           <-- the proposed I2 payload and tests
-  validate_architecture.py            <-- structural / traceability checks
+  check_traceability.py           <-- structural / traceability checks
   assess_reference_coverage.py        <-- documentary R7 verdicts  (PRIMARY 1.1)
   test_proposed_contracts.py          <-- I2-I4 proposed logical tests
   run_r7_variation_experiment.py      <-- experiment engine
@@ -76,7 +76,7 @@ part1_architecture_validation/
 Then run in this order:
 
 ```bash
-python part1_architecture_validation/validate_architecture.py
+python part1_architecture_validation/check_traceability.py
 python part1_architecture_validation/test_proposed_contracts.py
 python part1_architecture_validation/run_r7_variation_experiment.py
 python part1_architecture_validation/assess_variations.py
