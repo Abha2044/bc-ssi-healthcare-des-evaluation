@@ -47,7 +47,14 @@
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S2"
+      ],
+      "flow_interaction_ids": [
+        "R7-I1"
+      ],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "C4-OBLIGATIONS",
@@ -101,7 +108,17 @@
           ],
           "open_questions": []
         }
-      }
+      },
+      "flow_step_ids": [
+        "R7-S3"
+      ],
+      "flow_interaction_ids": [
+        "R7-I2"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-OBLIGATION-1"
+      ]
     },
     {
       "id": "C6-DECISION",
@@ -123,7 +140,17 @@
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S4"
+      ],
+      "flow_interaction_ids": [
+        "R7-I2"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-DECISION-1"
+      ]
     },
     {
       "id": "C6-OBLIGATIONS-ASSIGNED",
@@ -174,7 +201,17 @@
             "Appendix_A_corrected(1).docx, Table A-13"
           ]
         }
-      }
+      },
+      "flow_step_ids": [
+        "R7-S4"
+      ],
+      "flow_interaction_ids": [
+        "R7-I2"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-OBLIGATION-2"
+      ]
     },
     {
       "id": "C6-OBLIGATIONS-MECHANISM",
@@ -227,7 +264,15 @@
             "test_proposed_contracts.py, enforce_reference"
           ]
         }
-      }
+      },
+      "flow_step_ids": [
+        "R7-S4"
+      ],
+      "flow_interaction_ids": [],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-OBLIGATION-2"
+      ]
     },
     {
       "id": "C15-SCOPE",
@@ -249,7 +294,18 @@
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S5"
+      ],
+      "flow_interaction_ids": [
+        "R7-I3",
+        "R7-I4"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-DECISION-1"
+      ]
     },
     {
       "id": "C5-AUDIT",
@@ -271,7 +327,14 @@
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S6"
+      ],
+      "flow_interaction_ids": [
+        "R7-I5"
+      ],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "I1-REQUEST",
@@ -294,7 +357,12 @@
           "Requirements Appendix B, Section A R7",
           "Requirements Appendix B, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [
+        "R7-I1"
+      ],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "I2-RESPONSE",
@@ -335,7 +403,16 @@
           ],
           "open_questions": []
         }
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [
+        "R7-I2"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-DECISION-2",
+        "R7-OBLIGATION-1"
+      ]
     },
     {
       "id": "I3-SCOPE",
@@ -375,7 +452,16 @@
           ],
           "open_questions": []
         }
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [
+        "R7-I3"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-DECISION-2",
+        "R7-OBLIGATION-2"
+      ]
     },
     {
       "id": "I4-DATA",
@@ -415,7 +501,17 @@
           ],
           "open_questions": []
         }
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [
+        "R7-I4"
+      ],
+      "traceability_basis": "r7_flow",
+      "addresses_question_ids": [
+        "R7-DECISION-1",
+        "R7-DECISION-2",
+        "R7-OBLIGATION-2"
+      ]
     },
     {
       "id": "I5-AUDIT",
@@ -440,7 +536,12 @@
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [
+        "R7-I5"
+      ],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "STATE-POLICY",
@@ -460,7 +561,12 @@
         "supporting_evidence_refs": [
           "Appendix_A_corrected(1).docx, Table A-0"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S2"
+      ],
+      "flow_interaction_ids": [],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "STATE-CONSENT",
@@ -480,7 +586,12 @@
         "supporting_evidence_refs": [
           "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S2"
+      ],
+      "flow_interaction_ids": [],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "STATE-REQUEST",
@@ -502,7 +613,12 @@
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S4"
+      ],
+      "flow_interaction_ids": [],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "C5-ENFORCEMENT-OUTCOME",
@@ -526,7 +642,14 @@
           "RequirementsAppendixB-refined(1).docx, Section A R7",
           "RequirementsAppendixB-refined(1).docx, Table C R7"
         ]
-      }
+      },
+      "flow_step_ids": [
+        "R7-S6"
+      ],
+      "flow_interaction_ids": [
+        "R7-I5"
+      ],
+      "traceability_basis": "r7_flow"
     },
     {
       "id": "STATE-CONSENT-COORDINATION",
@@ -548,7 +671,11 @@
           "r7_reference_assessment.json, assessment_scope: analyst-selected fixed-snapshot boundary",
           "Appendix_A_corrected(1).docx, Section A.0 consent-role clarification"
         ]
-      }
+      },
+      "flow_step_ids": [],
+      "flow_interaction_ids": [],
+      "traceability_basis": "scope_exclusion",
+      "traceability_note": "Consent-update coordination is excluded by the fixed-consent pilot scope; C14 is outside the selected flow."
     }
   ],
   "capabilities": [
