@@ -39,38 +39,41 @@
         {
           "id": "R7-S1",
           "component": "C6",
-          "responsibility": "C6 Intercept the access request.",
+          "responsibility": "Intercept the access request.",
           "required_behaviour": "intercept_access_request",
-          "depends_on": []
+          "depends_on": [],
+          "source_basis": "Intercept: C6"
         },
         {
           "id": "R7-S2",
           "component": "C4",
-          "responsibility": "C4 evaluates the access request against policy.",
+          "responsibility": "Evaluate the subject, resource, action and purpose to make an access decision.",
           "required_behaviour": "evaluate_policy",
           "depends_on": [
             "R7-S1"
           ],
           "interaction_ids": [
             "R7-I1"
-          ]
+          ],
+          "source_basis": "Decide: C6->C4 (subject/resource/action/purpose)"
         },
         {
           "id": "R7-S3",
           "component": "C4",
-          "responsibility": "C4 sends the decision and applicable obligations back to C6.",
+          "responsibility": "Return the decision and any applicable disclosure obligations to the gateway.",
           "required_behaviour": "return_decision_with_obligations",
           "depends_on": [
             "R7-S2"
           ],
           "interaction_ids": [
             "R7-I2"
-          ]
+          ],
+          "source_basis": "Return decision+obligations: C4->C6"
         },
         {
           "id": "R7-S4",
           "component": "C6",
-          "responsibility": "C6 enforces permit/deny and the applicable masking/filtering restrictions, with C15.",
+          "responsibility": "Enforce the need-to-know decision and applicable mask/filter obligations, coordinating with C15.",
           "required_behaviours": [
             "enforce_need_to_know_decision",
             "enforce_disclosure_obligations"
@@ -81,12 +84,13 @@
           "interaction_ids": [
             "R7-I3",
             "R7-I4"
-          ]
+          ],
+          "source_basis": "Enforce: C6 (mask/filter) + C15 (labels/filters)"
         },
         {
           "id": "R7-S5",
           "component": "C15",
-          "responsibility": "C15 applies relevant labels/filters when serving health records.",
+          "responsibility": "Apply the relevant labels/filters when serving health-record data.",
           "required_behaviour": "apply_fhir_labels_or_filters",
           "depends_on": [
             "R7-S3"
@@ -100,7 +104,7 @@
         {
           "id": "R7-S6",
           "component": "C5",
-          "responsibility": "C5 records the access decision and enforcement outcome for audit.",
+          "responsibility": "Record an audit event for the access decision and enforcement outcome.",
           "required_behaviour": "log_audit_event",
           "depends_on": [
             "R7-S4",
@@ -108,7 +112,8 @@
           ],
           "interaction_ids": [
             "R7-I5"
-          ]
+          ],
+          "source_basis": "Audit: C5"
         }
       ],
       "interactions": [
@@ -186,7 +191,11 @@
         }
       ],
       "assessment_boundaries": [
-        "Component behaviour declarations do not prove requirement coverage.",
+        "Supporting flow behaviours do not automatically count as direct R7 capabilities.",
+        "C6-C15 interactions and audit sending are modeling choices requiring review.",
+        "Masking, filtering, and denial audit timing need further evidence.",
+        "Required behaviours do not prove baseline support.",
+        "State requirements must be explicit and supported by evidence.",
         "I3, I4 and I5 message-level contracts are derived choices requiring source review.",
         "The deny branch and audit timing are not separately modeled; interface compatibility remains unverified."
       ]
