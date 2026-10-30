@@ -72,9 +72,9 @@ models/components/C*.json         what each component does    names NO requireme
         |
 models/capability_mappings.json   claim + citation            <- the ONLY join
         |
-validate_architecture.py          structural checks
+check_traceability.py          structural checks
         |
-results/component_contributions.csv, interface_validation.csv, capability_coverage.csv
+results/traceability_links.csv
 ```
 
 **Why this is not circular.** The first three files are kept apart deliberately.
@@ -98,7 +98,13 @@ models/r7_reference_assessment.json   16 checks, one recorded verdict each
         + models/refined_variations.json   configurations and overrides
         |  assess_reference_coverage.py : review(), classification(), run()
 results/reference_criterion_assessment.csv    one row per configuration x check
-results/reference_requirement_coverage.csv    8 / 3 / 2 per configuration
+results/reference_requirement_coverage.csv
+Baseline: 8 supported, 4 unresolved, 2 N/A
+C4*: 8 supported, 4 unresolved, 2 N/A
+C6*: 9 supported, 3 unresolved, 2 N/A
+C4* + C6*: 9 supported, 3 unresolved, 2 N/A
+Proposed logical design: 12 supported, 0 unresolved, 2 N/A
+
 results/reference_supporting_flow_coverage.csv  audit, kept separate
 results/r7_reference_architecture_report.md
 ```
@@ -175,13 +181,13 @@ results/r7_controlled_comparison_by_case.csv
 
 C4*-only = 3/8 and C6*-only = 2/8 in the restrictive profile (see original variation summary). Both profiles use the **same** I2/I3/I4 logical rules. The availability flags `baseline_preparation_available` and `baseline_enforcement_available` in `refined_variations.json` are **analyst assumptions**, not measurements.
 
-**Do not present `compare_r7_controlled.py` as a second independent experiment**: it reuses `run_r7_variation_experiment.py` and the common test helpers.
+| `check_traceability.py` | Checks R7 model consistency and links between capabilities, components, flows, and assessment criteria | `traceability_links.csv` | Structural traceability only; does not establish coverage or source truth |
 
 ## G. Other scripts and result files: what to show and what to keep
 
 | Script | Function | Main outputs to consult | Paper priority |
 | --- | --- | --- | --- |
-| `validate_architecture.py` | Model/traceability and structural consistency checks | `capability_coverage.csv`, `component_contributions.csv`, `interface_validation.csv`, `requirement_coverage.csv` | Explain method briefly; detailed CSVs in GitHub |
+| `check_traceability.py` | Checks R7 model consistency and links between capabilities, components, flows, and assessment criteria | `traceability_links.csv` | Structural traceability only; does not establish coverage or source truth | `requirement_coverage.csv` | Explain method briefly; detailed CSVs in GitHub |
 | `assess_reference_coverage.py` | Aggregates manually justified criterion verdicts per architecture | `reference_criterion_assessment.csv`, `reference_requirement_coverage.csv`, `r7_reference_architecture_report.md` | **Primary Part 1.1** |
 | `assess_variations.py` | Checks ATAM/refinement definitions and selected architectural variations | Variation assessment output (e.g., `atam_comparison.csv` when generated) | Short explanation / traceability |
 | `test_proposed_contracts.py` | Tests selected proposed contract/selection/retrieval behaviour | Three `proposed_*_test_results.csv` files | One paragraph: 10/10 selected examples |
