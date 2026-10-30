@@ -40,7 +40,7 @@ so the verdict does not move. Only the proposed design, which specifies them,
 reaches `full`.
 
 Step 2 prints 8/8 accepted for every configuration under
-`shared_responsibilities` — the control — and 2/8 vs 8/8 under
+`shared_responsibilities` — the control — and 3/8 vs 8/8 under
 `atam_informed_availability`, where the baseline mechanisms are *assumed*
 unavailable. That second profile shows what follows from the assumption; it
 does not establish that the assumption is true.

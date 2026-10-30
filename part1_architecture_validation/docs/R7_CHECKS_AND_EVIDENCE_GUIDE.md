@@ -11,7 +11,7 @@ Paths in code ticks are relative to `part1_architecture_validation/`. Start with
 | **8 supported + 4 unresolved + 2 N/A** (baseline; **9 + 3 + 2** with C6\*) | 14 **direct documentary assessment criteria** | `results/reference_requirement_coverage.csv` | Published baseline and ATAM-only configurations remain **undetermined** |
 | **1 supported + 2 unresolved** | 3 **supplementary audit criteria** | `results/reference_supporting_flow_coverage.csv` and `reference_criterion_assessment.csv` | Kept separate from direct R7 criteria |
 | **10/10 PASS** | 10 **selected executable test examples** | three `results/proposed_*_test_results.csv` files | Tests an explicitly **proposed logical realization**, not historical baseline software |  
-| **8/8 vs 2/8** | 8 **variation cases** in two assumption profiles | `results/r7_controlled_comparison_summary.csv` | **Conditional** functional result, not measured reliability/uptime |
+| **8/8 vs 3/8** | 8 **variation cases** in two assumption profiles | `results/r7_controlled_comparison_summary.csv` | **Conditional** functional result, not measured reliability/uptime |
 
 The 14+3 criteria are **analyst-derived and manually reviewed** from Appendix B's R7 flow and Appendix A's state/component descriptions. The Python aggregation does not discover the original verdicts or prove the assessed architecture was implemented.
 
@@ -177,9 +177,9 @@ results/r7_controlled_comparison_by_case.csv
 | Profile | Baseline + same contracts | Both C4* + C6* + same contracts | What this supports |
 | --- | --- | --- | --- |
 | `shared_responsibilities` | **8/8** accepted | **8/8** accepted | No modeled advantage when baseline preparation/enforcement already available |
-| `atam_informed_availability` | **2/8** accepted | **8/8** accepted | Combined refinements help **if** baseline preparation/enforcement are unavailable as assumed |
+| `atam_informed_availability` | **3/8** accepted | **8/8** accepted | Combined refinements help **if** baseline preparation/enforcement are unavailable as assumed |
 
-C4*-only = 3/8 and C6*-only = 2/8 in the restrictive profile (see original variation summary). Both profiles use the **same** I2/I3/I4 logical rules. The availability flags `baseline_preparation_available` and `baseline_enforcement_available` in `refined_variations.json` are **analyst assumptions**, not measurements.
+C4*-only = 3/8 and C6*-only = 3/8 in the restrictive profile (see original variation summary). Both profiles use the **same** I2/I3/I4 logical rules. The availability flags `baseline_preparation_available` and `baseline_enforcement_available` in `refined_variations.json` are **analyst assumptions**, not measurements.
 
 | `check_traceability.py` | Checks R7 model consistency and links between capabilities, components, flows, and assessment criteria | `traceability_links.csv` | Structural traceability only; does not establish coverage or source truth |
 
