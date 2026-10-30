@@ -1,4 +1,4 @@
-# Results — generated, do not edit
+# Results 
 
 Everything here is overwritten by the scripts. Read in this order:
 

@@ -121,7 +121,7 @@ def validate(models, results):
             require(component is not None, f"{mapping['id']}: unknown component")
             require(candidate["component_id"] in flow["participants"], "Candidate outside flow.")
             require(candidate["behaviour_id"] in component["behaviours"],
-                    f"{mapping['id']}: unknown candidate behaviour")
+                 f"{mapping['id']}: unknown candidate behaviour")
 
     # 3. Separate cited design responsibilities from implementation assurance.
     contributions = []

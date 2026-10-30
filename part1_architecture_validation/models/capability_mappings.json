@@ -6,15 +6,7 @@
     "baseline_components": "baseline_components.json",
     "flows": "flows.json"
   },
-  "conventions": {
-    "scope": "R7 baseline only.",
-    "candidate_rule": "Candidates suggest possible coverage, not proof.",
-    "assessment_rule": "Check behaviours, interfaces, and source evidence.",
-    "unknown_rule": "Missing or unverified evidence means undetermined.",
-    "absence_rule": "No mapping does not mean no capability.",
-    "state_rule": "Check state only when the behaviour requires it.",
-    "source_rule": "Sources describe design, not verified implementation."
-  },
+
   "capability_mappings": [
     {
       "id": "MAP-R7-1",
